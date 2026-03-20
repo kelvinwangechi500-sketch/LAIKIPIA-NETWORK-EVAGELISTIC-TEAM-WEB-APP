@@ -1,0 +1,68 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Member — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('branches', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Add New Member</div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div style="max-width:560px;margin:0 auto">
+        <div class="card">
+          <div class="card-header"><h3>➕ Register New Member</h3></div>
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('auth.register') }}">
+              <div class="form-group">
+                <label>Full Name *</label>
+                <input name="full_name" class="form-control" required placeholder="First Last">
+              </div>
+              <div class="form-group">
+                <label>Email Address *</label>
+                <input type="email" name="email" class="form-control" required placeholder="member@net.org">
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input name="phone" class="form-control" placeholder="+254 700 000 000">
+                </div>
+                <div class="form-group">
+                  <label>Role *</label>
+                  <select name="role" class="form-control">
+                    <option value="member">Member</option>
+                    <option value="vice_secretary">Vice Secretary</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Temporary Password *</label>
+                <input type="password" name="password" class="form-control" required
+                       placeholder="Min 8 characters" minlength="8">
+                <small style="color:var(--grey-400);font-size:12px">Member should change this after first login.</small>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px">
+                <button type="submit" class="btn btn-primary" style="flex:1">Create Account</button>
+                <a href="{{ url_for('admin.members') }}" class="btn btn-grey">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

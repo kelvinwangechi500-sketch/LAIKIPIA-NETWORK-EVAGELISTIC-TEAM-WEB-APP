@@ -1,0 +1,44 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Logs — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head><body>
+<div class="app-shell">
+  {{ sidebar('audit', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">🔍 System Audit Logs</div>
+    </div>
+    <div class="content-body">
+      <div class="card">
+        <div class="card-header"><h3>🔍 Recent System Actions</h3><span style="font-size:13px;color:var(--grey-400)">Last 200 actions</span></div>
+        <div class="card-body" style="padding:0">
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>User</th><th>Action</th><th>Details</th><th>IP Address</th><th>Timestamp</th></tr></thead>
+              <tbody>
+                {% for log in logs %}
+                <tr>
+                  <td style="color:var(--grey-400)">{{ loop.index }}</td>
+                  <td><strong>{{ log.user.full_name if log.user else 'System' }}</strong></td>
+                  <td><span class="pill pill-blue" style="font-size:11px">{{ log.action }}</span></td>
+                  <td style="font-size:12px;color:var(--grey-500);max-width:300px">{{ log.details or '—' }}</td>
+                  <td style="font-size:12px;color:var(--grey-400)">{{ log.ip_address or '—' }}</td>
+                  <td style="font-size:12px;color:var(--grey-400)">{{ log.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No audit logs yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

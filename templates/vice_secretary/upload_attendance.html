@@ -1,0 +1,104 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Attendance — NET Platform</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('upload', 'vice_secretary', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">📸 OCR Attendance Upload</div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div style="max-width:600px;margin:0 auto">
+        <div class="card">
+          <div class="card-header"><h3>📸 Upload Attendance Sheet Photo</h3></div>
+          <div class="card-body">
+            <div style="background:#dbeafe;border-left:4px solid #1e40af;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:20px;font-size:13px;color:#1e3a8a">
+              <strong>How it works:</strong> Take a clear photo of the paper attendance sheet.
+              Our AI (OpenAI Vision) will extract the names, residence, year, and IDs of members marked present,
+              match them against the database, and allow review before saving.
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+              <div class="form-group">
+                <label>Meeting Date *</label>
+                <input type="date" name="meeting_date" class="form-control" required
+                       value="{{ today }}" max="{{ today }}">
+              </div>
+
+              <div class="form-group">
+                <label>Attendance Sheet Photo *</label>
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                  <span class="uz-icon">📷</span>
+                  <p id="uploadLabel">Click to select photo or drag & drop here</p>
+                  <p style="font-size:11px;margin-top:4px;color:var(--grey-400)">PNG, JPG, JPEG supported · Max 20MB</p>
+                </div>
+                <input type="file" name="attendance_image" id="fileInput" accept="image/*"
+                       style="display:none" onchange="previewFile(this)">
+                <div id="preview" style="margin-top:12px;display:none">
+                  <img id="previewImg" style="max-width:100%;border-radius:8px;border:1px solid var(--grey-200)">
+                </div>
+              </div>
+
+              <!-- Hidden input to store unmatched names -->
+              <input type="hidden" name="unmatched_names" id="unmatchedNames">
+
+              <button type="submit" class="btn btn-primary" style="width:100%" id="submitBtn">
+                🤖 Process with AI OCR
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Drag and drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    previewFile(document.getElementById('fileInput'));
+  }
+});
+
+function previewFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('uploadLabel').textContent = `✅ ${file.name}`;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Disable submit while processing
+document.getElementById('uploadForm').onsubmit = function() {
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '⏳ Processing with AI… please wait';
+  btn.disabled = true;
+};
+</script>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

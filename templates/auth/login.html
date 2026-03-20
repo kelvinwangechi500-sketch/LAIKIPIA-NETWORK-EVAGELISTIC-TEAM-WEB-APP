@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Network Evangelistic Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Source Sans 3",sans-serif;min-height:100vh;background:#111827;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-wrap{width:100%;max-width:440px}
+.login-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.4)}
+.login-header{background:linear-gradient(160deg,#7F1D1D 0%,#111827 100%);padding:36px 40px 32px;text-align:center}
+.login-header img{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.3);margin-bottom:16px;object-fit:cover}
+.login-header h1{font-family:"Playfair Display",serif;color:#fff;font-size:22px;line-height:1.3;margin-bottom:4px}
+.login-header p{color:rgba(255,255,255,0.5);font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+.login-body{padding:36px 40px}
+.flash{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:18px;border-left:4px solid}
+.flash.success{background:#d1fae5;border-color:#065f46;color:#064e3b}
+.flash.danger{background:#fee2e2;border-color:#B91C1C;color:#7F1D1D}
+.flash.warning{background:#fef3c7;border-color:#92400e;color:#78350f}
+.flash.info{background:#dbeafe;border-color:#1e40af;color:#1e3a8a}
+label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+input{width:100%;padding:11px 14px;border-radius:8px;border:1px solid #E5E7EB;font-size:14px;font-family:inherit;background:#F3F4F6;outline:none;transition:all .2s;margin-bottom:16px}
+input:focus{border-color:#B91C1C;background:#fff;box-shadow:0 0 0 3px rgba(185,28,28,.08)}
+.btn{width:100%;padding:12px;border-radius:8px;background:#B91C1C;color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:4px}
+.btn:hover{background:#7F1D1D;transform:translateY(-1px);box-shadow:0 4px 14px rgba(185,28,28,.35)}
+.login-footer{text-align:center;padding:0 40px 28px;font-size:12px;color:#9CA3AF}
+.divider{height:1px;background:#E5E7EB;margin:20px 0}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="data:image/png;base64,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" alt="NET Logo">
+      <h1>Network Evangelistic Team</h1>
+      <p>Management Platform</p>
+    </div>
+    <div class="login-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <label>Email Address</label>
+        <input type="email" name="email" required placeholder="you@net.org" autocomplete="email">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+        <button type="submit" class="btn">Sign In</button>
+      </form>
+    </div>
+    <div class="login-footer">
+      <div class="divider"></div>
+      Contact your Administrator for account access.<br>
+      &copy; Network Evangelistic Team Management Platform
+    </div>
+  </div>
+</div>
+</body>
+</html>

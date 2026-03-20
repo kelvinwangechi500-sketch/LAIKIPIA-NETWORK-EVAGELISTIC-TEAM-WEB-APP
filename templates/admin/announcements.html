@@ -1,0 +1,88 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Announcements — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('announcements', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Announcements</div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('newAnnModal').classList.add('open')">
+          ➕ New Announcement
+        </button>
+      </div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      {% for ann in announcements %}
+      <div class="announcement {% if ann.is_pinned %}pinned{% endif %}">
+        <div class="announcement-meta" style="display:flex;justify-content:space-between;align-items:center">
+          <span>
+            {% if ann.is_pinned %}📌 <strong>Pinned</strong> · {% endif %}
+            Posted by <strong>{{ ann.author.full_name }}</strong> ·
+            {{ ann.created_at.strftime('%d %B %Y at %H:%M') }} ·
+            <span class="pill pill-grey">{{ ann.audience }}</span>
+          </span>
+          <form method="POST" action="{{ url_for('admin.delete_announcement', aid=ann.id) }}"
+                onsubmit="return confirm('Delete this announcement?')">
+            <button class="btn btn-sm btn-danger">🗑</button>
+          </form>
+        </div>
+        <h4 style="margin:8px 0 6px">{{ ann.title }}</h4>
+        <p style="white-space:pre-wrap">{{ ann.body }}</p>
+      </div>
+      {% else %}
+      <div class="empty-state">No announcements yet. Create the first one!</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- New Announcement Modal -->
+<div class="modal-overlay" id="newAnnModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📢 New Announcement</h3>
+      <button class="modal-close" onclick="document.getElementById('newAnnModal').classList.remove('open')">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.new_announcement') }}">
+      <div class="form-group">
+        <label>Title *</label>
+        <input name="title" class="form-control" required placeholder="Announcement title">
+      </div>
+      <div class="form-group">
+        <label>Message Body *</label>
+        <textarea name="body" class="form-control" rows="5" required placeholder="Type your message here..."></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Audience</label>
+          <select name="audience" class="form-control">
+            <option value="all">All Members</option>
+            <option value="members">Members Only</option>
+            <option value="admin">Admin & Executives</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px">
+          <input type="checkbox" name="is_pinned" id="pinChk" style="width:auto;margin:0">
+          <label for="pinChk" style="margin:0;font-weight:normal">📌 Pin this announcement</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">Post Announcement</button>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

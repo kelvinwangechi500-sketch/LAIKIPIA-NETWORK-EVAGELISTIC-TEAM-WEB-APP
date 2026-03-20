@@ -1,0 +1,120 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('dashboard', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Admin Dashboard</div>
+      <div class="topbar-actions">
+        <button class="notif-btn" title="Notifications">🔔<span class="notif-dot"></span></button>
+        <span style="font-size:13px;color:var(--grey-400)">{{ current_user.full_name }}</span>
+      </div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <div class="val">{{ total_members }}</div>
+            <div class="lbl">Total Members</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📢</div>
+          <div class="stat-info">
+            <div class="val">{{ total_announcements }}</div>
+            <div class="lbl">Announcements</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📝</div>
+          <div class="stat-info">
+            <div class="val">{{ total_meetings }}</div>
+            <div class="lbl">Meeting Records</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✝️</div>
+          <div class="stat-info">
+            <div class="val">Active</div>
+            <div class="lbl">Platform Status</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <h3>📢 Recent Announcements</h3>
+              <a href="{{ url_for('admin.announcements') }}" class="btn btn-sm btn-outline">View All</a>
+            </div>
+            <div class="card-body" style="padding:16px">
+              {% for ann in recent_announcements %}
+              <div class="announcement {% if ann.is_pinned %}pinned{% endif %}">
+                <div class="announcement-meta">
+                  {% if ann.is_pinned %}📌 Pinned · {% endif %}
+                  {{ ann.author.full_name }} · {{ ann.created_at.strftime('%d %b %Y') }}
+                </div>
+                <h4>{{ ann.title }}</h4>
+                <p>{{ ann.body[:120] }}{% if ann.body|length > 120 %}…{% endif %}</p>
+              </div>
+              {% else %}
+              <div class="empty-state">No announcements yet.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <h3>👥 Recent Members</h3>
+              <a href="{{ url_for('admin.members') }}" class="btn btn-sm btn-outline">Manage</a>
+            </div>
+            <div class="card-body" style="padding:0">
+              <table class="data-table">
+                <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+                <tbody>
+                  {% for m in recent_members %}
+                  <tr>
+                    <td><strong>{{ m.full_name }}</strong><br><small style="color:var(--grey-400)">{{ m.email }}</small></td>
+                    <td><span class="pill pill-blue">{{ m.role.replace('_',' ') }}</span></td>
+                    <td><span class="pill {% if m.is_active %}pill-green{% else %}pill-red{% endif %}">{{ 'Active' if m.is_active else 'Inactive' }}</span></td>
+                  </tr>
+                  {% else %}
+                  <tr><td colspan="3" class="empty-state">No members yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+              <a href="{{ url_for('auth.register') }}" class="btn btn-primary">➕ Add New Member</a>
+              <a href="{{ url_for('admin.announcements') }}" class="btn btn-outline">📢 Post Announcement</a>
+              <a href="{{ url_for('admin.attendance') }}" class="btn btn-grey">📋 View Attendance</a>
+              <a href="{{ url_for('admin.minutes') }}" class="btn btn-grey">📝 Meeting Minutes</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

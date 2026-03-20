@@ -1,0 +1,105 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+  .search-input { margin-right: 10px; width: 200px; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('announcements', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Attendance Analytics</div>
+      <div class="topbar-actions">
+        <input type="date" id="dateFilter" class="form-control" style="width:auto;margin:0" onchange="filterByDate(this.value)">
+        <input type="text" id="searchInput" class="form-control search-input" placeholder="Search by name, phone, residence, year..." onkeyup="filterBySearch(this.value)">
+      </div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 Attendance Records</h3>
+          <span style="font-size:13px;color:var(--grey-400)">{{ records|length }} records</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="attTable">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Phone</th>
+                <th>Residence</th>
+                <th>Year</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Source</th>
+                <th>Recorded By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records %}
+              <tr data-date="{{ r.meeting_date }}">
+                <td><strong>{{ r.user.full_name }}</strong></td>
+                <td>{{ r.user.phone or '-' }}</td>
+                <td>{{ r.user.residence or '-' }}</td>
+                <td>{{ r.user.year or '-' }}</td>
+                <td>{{ r.meeting_date.strftime('%d %B %Y') }}</td>
+                <td>
+                  <span class="pill
+                    {% if r.status == 'present' %}pill-green
+                    {% elif r.status == 'absent' %}pill-red
+                    {% else %}pill-yellow{% endif %}">
+                    {{ r.status }}
+                  </span>
+                </td>
+                <td><span class="pill pill-grey">{{ r.source }}</span></td>
+                <td style="font-size:12px;color:var(--grey-400)">
+                  {% if r.recorded_by %}
+                    {{ r.recorder.full_name if r.recorder else 'System' }}
+                  {% else %}System{% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="8" class="empty-state">No attendance records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+function filterByDate(val) {
+  document.querySelectorAll('#attTable tbody tr[data-date]').forEach(row => {
+    row.style.display = !val || row.dataset.date === val ? '' : 'none';
+  });
+}
+
+function filterBySearch(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('#attTable tbody tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    let found = false;
+    cells.forEach(cell => {
+      if(cell.textContent.toLowerCase().includes(q)) found = true;
+    });
+    row.style.display = found ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

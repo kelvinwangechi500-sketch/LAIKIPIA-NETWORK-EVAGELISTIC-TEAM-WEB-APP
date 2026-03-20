@@ -1,0 +1,64 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Member — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head><body>
+<div class="app-shell">
+  {{ sidebar('members', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">✏️ Edit Member — {{ user.full_name }}</div>
+      <div class="topbar-actions"><a href="{{ url_for('admin.members') }}" class="btn btn-grey btn-sm">← Back</a></div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+      <div style="max-width:600px;margin:0 auto">
+        <div class="card">
+          <div class="card-header"><h3>👤 Edit Member Details</h3></div>
+          <div class="card-body">
+            <form method="POST">
+              <div class="grid-2">
+                <div class="form-group"><label>Full Name *</label><input name="full_name" class="form-control" required value="{{ user.full_name }}"></div>
+                <div class="form-group"><label>Email *</label><input type="email" name="email" class="form-control" required value="{{ user.email }}"></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Phone</label><input name="phone" class="form-control" value="{{ user.phone or '' }}"></div>
+                <div class="form-group"><label>Role *</label>
+                  <select name="role" class="form-control">
+                    <option value="member" {% if user.role=='member' %}selected{% endif %}>Member</option>
+                    <option value="vice_secretary" {% if user.role=='vice_secretary' %}selected{% endif %}>Vice Secretary</option>
+                    <option value="admin" {% if user.role=='admin' %}selected{% endif %}>Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Residence</label><input name="residence" class="form-control" value="{{ user.residence or '' }}" placeholder="e.g. Main Campus"></div>
+                <div class="form-group"><label>Year</label><input name="year" class="form-control" value="{{ user.year or '' }}" placeholder="e.g. Year 2"></div>
+              </div>
+              <div class="form-group"><label>Branch</label>
+                <select name="branch_id" class="form-control">
+                  <option value="">— No Branch —</option>
+                  {% for b in branches %}<option value="{{ b.id }}" {% if user.branch_id==b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="form-group"><label>Reset Password <small style="font-weight:normal;color:var(--grey-400)">(leave blank to keep current)</small></label>
+                <input type="password" name="new_password" class="form-control" placeholder="New password (min 8 chars)" minlength="8">
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px">
+                <button type="submit" class="btn btn-primary" style="flex:1">💾 Save Changes</button>
+                <a href="{{ url_for('admin.members') }}" class="btn btn-grey">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

@@ -1,0 +1,62 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Minutes — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+ {{ sidebar('announcements', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Meeting Minutes Archive</div>
+    </div>
+    <div class="content-body">
+      {% for m in minutes %}
+      <div class="card">
+        <div class="card-header">
+          <h3>📝 {{ m.title }}</h3>
+          <span style="font-size:12px;color:var(--grey-400)">{{ m.meeting_date.strftime('%d %B %Y') }}</span>
+        </div>
+        <div class="card-body">
+          {% if m.summary %}
+          <div style="margin-bottom:16px">
+            <strong style="font-size:13px;color:var(--grey-700);text-transform:uppercase;letter-spacing:.5px">AI Summary</strong>
+            <p style="margin-top:8px;line-height:1.7;font-size:14px">{{ m.summary }}</p>
+          </div>
+          {% endif %}
+          {% if m.action_points %}
+          <div style="margin-bottom:16px">
+            <strong style="font-size:13px;color:var(--grey-700);text-transform:uppercase;letter-spacing:.5px">Action Points</strong>
+            <ul style="margin-top:8px;padding-left:20px;font-size:14px;line-height:1.8">
+              {% set actions = m.action_points | from_json %}
+              {% for action in actions %}<li>{{ action }}</li>{% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if m.transcript %}
+          <details>
+            <summary style="cursor:pointer;font-size:13px;color:var(--grey-400);margin-bottom:8px">
+              📄 View Full Transcript
+            </summary>
+            <div style="background:var(--grey-100);padding:14px;border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:300px;overflow-y:auto;margin-top:8px">{{ m.transcript }}</div>
+          </details>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="margin-top:60px">
+        <div style="font-size:48px;margin-bottom:14px">📝</div>
+        <p>No meeting minutes recorded yet.</p>
+        <p style="margin-top:6px;font-size:12px">Use the Vice Secretary's <em>Record Meeting</em> feature to create AI-powered minutes.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

@@ -1,0 +1,74 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Attendance — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('manual', 'vice_secretary', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">✏️ Manual Attendance</div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <form method="POST">
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-body" style="display:flex;gap:14px;align-items:flex-end">
+            <div class="form-group" style="margin:0;flex:1">
+              <label>Meeting Date *</label>
+              <input type="date" name="meeting_date" class="form-control" required value="{{ today }}">
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="btn btn-success btn-sm" onclick="checkAll(true)">✅ All Present</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="checkAll(false)">❌ All Absent</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>👥 Members ({{ members|length }})</h3></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Present?</th><th>#</th><th>Name</th><th>Email</th></tr></thead>
+              <tbody>
+                {% for m in members %}
+                <tr>
+                  <td style="text-align:center">
+                    <input type="checkbox" name="present_ids" value="{{ m.id }}"
+                           id="chk_{{ m.id }}" style="width:18px;height:18px;cursor:pointer">
+                  </td>
+                  <td style="color:var(--grey-400)">{{ loop.index }}</td>
+                  <td><label for="chk_{{ m.id }}" style="cursor:pointer;font-weight:600">{{ m.full_name }}</label></td>
+                  <td style="color:var(--grey-400);font-size:12px">{{ m.email }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-state">No active members found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <button type="submit" class="btn btn-primary" style="min-width:200px">💾 Save Attendance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+function checkAll(v) {
+  document.querySelectorAll('input[name="present_ids"]').forEach(c => c.checked = v);
+}
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

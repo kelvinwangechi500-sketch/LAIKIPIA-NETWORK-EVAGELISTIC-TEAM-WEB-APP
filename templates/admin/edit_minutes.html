@@ -1,0 +1,51 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Minutes — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head><body>
+<div class="app-shell">
+  {{ sidebar('minutes', 'admin', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">✏️ Edit Minutes — {{ minutes.title }}</div>
+      <div class="topbar-actions"><a href="{{ url_for('admin.minutes') }}" class="btn btn-grey btn-sm">← Back</a></div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+      <div class="card">
+        <div class="card-header"><h3>📝 Edit Meeting Minutes</h3>
+          <div style="display:flex;gap:8px">
+            <a href="{{ url_for('admin.export_minutes', mid=minutes.id, fmt='pdf') }}" class="btn btn-sm btn-outline">⬇ PDF</a>
+            <a href="{{ url_for('admin.export_minutes', mid=minutes.id, fmt='docx') }}" class="btn btn-sm btn-outline">⬇ DOCX</a>
+            <a href="{{ url_for('admin.export_minutes', mid=minutes.id, fmt='txt') }}" class="btn btn-sm btn-outline">⬇ TXT</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="grid-2">
+              <div class="form-group"><label>Meeting Title *</label><input name="title" class="form-control" required value="{{ minutes.title }}"></div>
+              <div class="form-group"><label>Date</label><input type="text" class="form-control" value="{{ minutes.meeting_date }}" disabled></div>
+            </div>
+            <div class="form-group"><label>Summary</label><textarea name="summary" class="form-control" rows="5">{{ minutes.summary or '' }}</textarea></div>
+            <div class="form-group"><label>Action Points <small style="font-weight:normal;color:var(--grey-400)">(one per line)</small></label>
+              <textarea name="action_points" class="form-control" rows="6" id="apField">{% if minutes.action_points %}{% set pts = minutes.action_points | from_json %}{% for pt in pts %}{{ pt }}
+{% endfor %}{% endif %}</textarea>
+            </div>
+            <div class="form-group"><label>Full Transcript</label><textarea name="transcript" class="form-control" rows="12">{{ minutes.transcript or '' }}</textarea></div>
+            <div style="display:flex;gap:10px">
+              <button type="submit" class="btn btn-primary" style="flex:1">💾 Save Changes</button>
+              <a href="{{ url_for('admin.minutes') }}" class="btn btn-grey">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

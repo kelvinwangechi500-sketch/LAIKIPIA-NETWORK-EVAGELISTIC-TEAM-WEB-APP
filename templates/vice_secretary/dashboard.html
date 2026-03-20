@@ -1,0 +1,67 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VS Dashboard — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('dashboard', 'vice_secretary', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Vice Secretary Dashboard</div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <!-- Quick Actions -->
+      <div class="grid-3" style="margin-bottom:20px">
+        <a href="{{ url_for('vs.upload_attendance') }}" class="stat-card" style="text-decoration:none;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div class="stat-icon">📸</div>
+          <div class="stat-info"><div class="val" style="font-size:16px">Upload</div><div class="lbl">OCR Attendance</div></div>
+        </a>
+        <a href="{{ url_for('vs.manual_attendance') }}" class="stat-card" style="text-decoration:none;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div class="stat-icon">✏️</div>
+          <div class="stat-info"><div class="val" style="font-size:16px">Manual</div><div class="lbl">Record Attendance</div></div>
+        </a>
+        <a href="{{ url_for('vs.record_meeting') }}" class="stat-card" style="text-decoration:none;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div class="stat-icon">🎙️</div>
+          <div class="stat-info"><div class="val" style="font-size:16px">Record</div><div class="lbl">Meeting Minutes</div></div>
+        </a>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>📋 Recent Attendance Records</h3></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Member</th><th>Date</th><th>Status</th><th>Source</th></tr></thead>
+            <tbody>
+              {% for r in recent_records %}
+              <tr>
+                <td><strong>{{ r.user.full_name }}</strong></td>
+                <td>{{ r.meeting_date.strftime('%d %b %Y') }}</td>
+                <td>
+                  <span class="pill {% if r.status=='present' %}pill-green{% elif r.status=='absent' %}pill-red{% else %}pill-yellow{% endif %}">
+                    {{ r.status }}
+                  </span>
+                </td>
+                <td><span class="pill pill-grey">{{ r.source }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="empty-state">No records yet. Start by uploading or manually recording attendance.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

@@ -1,0 +1,74 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('profile', 'member', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">My Profile</div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div style="max-width:560px;margin:0 auto">
+        <!-- Profile Card -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-body" style="display:flex;align-items:center;gap:20px">
+            <div style="width:72px;height:72px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;flex-shrink:0">
+              {{ current_user.full_name[0] }}
+            </div>
+            <div>
+              <h2 style="font-size:20px">{{ current_user.full_name }}</h2>
+              <p style="color:var(--grey-400);font-size:13px;margin-top:4px">{{ current_user.email }}</p>
+              <span class="pill pill-blue" style="margin-top:6px">{{ current_user.role.replace('_',' ') }}</span>
+              {% if current_user.branch %}
+              <span class="pill pill-grey" style="margin-top:6px;margin-left:4px">🌿 {{ current_user.branch.name }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+          <div class="card-header"><h3>🔒 Change Password</h3></div>
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('auth.change_password') }}">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" name="old_password" class="form-control" required placeholder="Enter current password">
+              </div>
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="new_password" class="form-control" required placeholder="Min 8 characters" minlength="8">
+              </div>
+              <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>ℹ️ Account Info</h3></div>
+          <div class="card-body">
+            <table style="width:100%;font-size:14px;line-height:2">
+              <tr><td style="color:var(--grey-400);width:140px">Member Since</td><td><strong>{{ current_user.joined_date.strftime('%d %B %Y') }}</strong></td></tr>
+              <tr><td style="color:var(--grey-400)">Phone</td><td><strong>{{ current_user.phone or 'Not set' }}</strong></td></tr>
+              <tr><td style="color:var(--grey-400)">Status</td><td><span class="pill pill-green">Active</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

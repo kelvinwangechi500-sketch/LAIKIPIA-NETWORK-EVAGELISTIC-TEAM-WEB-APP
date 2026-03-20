@@ -1,0 +1,132 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('dashboard', 'member', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Welcome, {{ current_user.full_name.split()[0] }} 👋</div>
+      <div class="topbar-actions">
+        <button class="notif-btn">🔔<span class="notif-dot"></span></button>
+      </div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <!-- Attendance Overview -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-info">
+            <div class="val">{{ total_meetings }}</div>
+            <div class="lbl">Total Meetings</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <div class="val">{{ present_count }}</div>
+            <div class="lbl">Times Present</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info">
+            <div class="val">{{ attendance_rate }}%</div>
+            <div class="lbl">Attendance Rate</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✝️</div>
+          <div class="stat-info">
+            <div class="val">Active</div>
+            <div class="lbl">Membership Status</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Announcements -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <h3>📢 Announcements</h3>
+              <span class="badge">{{ announcements|length }}</span>
+            </div>
+            <div class="card-body" style="padding:14px;max-height:360px;overflow-y:auto">
+              {% for ann in announcements %}
+              <div class="announcement {% if ann.is_pinned %}pinned{% endif %}">
+                <div class="announcement-meta">
+                  {% if ann.is_pinned %}📌 Pinned · {% endif %}
+                  {{ ann.created_at.strftime('%d %b %Y') }}
+                </div>
+                <h4>{{ ann.title }}</h4>
+                <p>{{ ann.body[:200] }}{% if ann.body|length > 200 %}…{% endif %}</p>
+              </div>
+              {% else %}
+              <div class="empty-state">No announcements.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Attendance -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <h3>📋 My Recent Attendance</h3>
+              <a href="{{ url_for('member.attendance') }}" class="btn btn-sm btn-outline">Full History</a>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Date</th><th>Status</th></tr></thead>
+                <tbody>
+                  {% for r in my_attendance %}
+                  <tr>
+                    <td>{{ r.meeting_date.strftime('%d %b %Y') }}</td>
+                    <td>
+                      <span class="pill {% if r.status=='present' %}pill-green{% elif r.status=='absent' %}pill-red{% else %}pill-yellow{% endif %}">
+                        {{ r.status }}
+                      </span>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr><td colspan="2" class="empty-state">No records yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Attendance Rate Bar -->
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                <span style="font-weight:600;font-size:14px">📊 Attendance Rate</span>
+                <span style="font-weight:700;color:var(--red)">{{ attendance_rate }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-bar-fill" style="width:{{ attendance_rate }}%"></div>
+              </div>
+              <div style="font-size:12px;color:var(--grey-400);margin-top:6px">
+                {{ present_count }} present out of {{ total_meetings }} meetings
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

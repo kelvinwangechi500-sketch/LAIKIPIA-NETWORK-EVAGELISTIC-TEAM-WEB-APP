@@ -1,0 +1,67 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Attendance — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('attendance', 'member', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">My Attendance History</div>
+    </div>
+    <div class="content-body">
+      {% set total = records|length %}
+      {% set present = records|selectattr('status','eq','present')|list|length %}
+      {% set rate = ((present / total * 100)|round(1)) if total else 0 %}
+
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-info"><div class="val">{{ total }}</div><div class="lbl">Total Meetings</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info"><div class="val">{{ present }}</div><div class="lbl">Present</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info"><div class="val">{{ rate }}%</div><div class="lbl">Rate</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>📋 Full Attendance Record</h3></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Meeting Date</th><th>Status</th><th>Source</th></tr></thead>
+            <tbody>
+              {% for r in records %}
+              <tr>
+                <td style="color:var(--grey-400)">{{ loop.index }}</td>
+                <td>{{ r.meeting_date.strftime('%A, %d %B %Y') }}</td>
+                <td>
+                  <span class="pill {% if r.status=='present' %}pill-green{% elif r.status=='absent' %}pill-red{% else %}pill-yellow{% endif %}">
+                    {% if r.status=='present' %}✅{% elif r.status=='absent' %}❌{% else %}⚠️{% endif %}
+                    {{ r.status }}
+                  </span>
+                </td>
+                <td><span class="pill pill-grey">{{ r.source }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="empty-state">No attendance records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

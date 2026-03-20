@@ -1,0 +1,213 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Record Meeting — NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('record', 'vice_secretary', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">🎙️ AI Meeting Voice Recording</div>
+    </div>
+    <div class="content-body">
+      <div style="max-width:680px;margin:0 auto">
+        <div style="background:#dbeafe;border-left:4px solid #1e40af;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:20px;font-size:13px;color:#1e3a8a">
+          <strong>How it works:</strong> Record the meeting audio using your device microphone.
+          When you stop, the audio is sent to OpenAI Whisper for transcription, then GPT-4o generates
+          a clean summary and extracts action points. Results are saved as official meeting minutes.
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>🎙️ Recording Controls</h3></div>
+          <div class="card-body">
+            <!-- Meeting Details -->
+            <div class="grid-2" style="margin-bottom:20px">
+              <div class="form-group" style="margin:0">
+                <label>Meeting Date</label>
+                <input type="date" id="meetingDate" class="form-control" value="{{ today }}">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Meeting Title</label>
+                <input type="text" id="meetingTitle" class="form-control" placeholder="e.g. Monthly General Meeting">
+              </div>
+            </div>
+
+            <!-- Recording UI -->
+            <div class="recording-controls">
+              <button class="rec-btn record" id="recordBtn" onclick="startRecording()" title="Start Recording">
+                🔴
+              </button>
+              <button class="rec-btn stop" id="stopBtn" onclick="stopRecording()" title="Stop Recording" style="display:none">
+                ⏹
+              </button>
+              <div>
+                <div class="rec-timer" id="timer">00:00</div>
+                <div style="font-size:12px;color:var(--grey-400)" id="recStatus">Ready to record</div>
+              </div>
+              <div style="flex:1">
+                <div id="audioLevelBar" style="height:6px;background:var(--grey-200);border-radius:3px;overflow:hidden">
+                  <div id="audioLevel" style="height:100%;width:0;background:var(--red);border-radius:3px;transition:width .1s"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Audio Playback -->
+            <audio id="audioPlayback" controls style="width:100%;display:none;margin-bottom:16px"></audio>
+
+            <!-- Submit Button -->
+            <button class="btn btn-primary" id="transcribeBtn" onclick="submitRecording()" style="width:100%;display:none">
+              🤖 Transcribe & Generate Minutes
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="card" id="resultsPanel" style="display:none">
+          <div class="card-header">
+            <h3>📝 AI-Generated Meeting Minutes</h3>
+            <button class="btn btn-sm btn-grey" onclick="window.print()">🖨️ Print</button>
+          </div>
+          <div class="card-body">
+            <div id="loadingState" style="text-align:center;padding:30px;display:none">
+              <div style="font-size:36px;margin-bottom:10px">⏳</div>
+              <p>Processing with AI — this may take 30–60 seconds…</p>
+            </div>
+
+            <div id="minutesContent" style="display:none">
+              <div style="margin-bottom:20px">
+                <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--grey-400);margin-bottom:8px">📄 Summary</h4>
+                <div id="summaryText" style="line-height:1.8;font-size:14px;background:var(--grey-100);padding:14px;border-radius:8px"></div>
+              </div>
+              <div style="margin-bottom:20px">
+                <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--grey-400);margin-bottom:8px">✅ Action Points</h4>
+                <ul id="actionPoints" style="padding-left:20px;line-height:2;font-size:14px"></ul>
+              </div>
+              <details>
+                <summary style="cursor:pointer;font-size:13px;color:var(--grey-400);padding:8px 0">📋 View Full Transcript</summary>
+                <div id="transcriptText" style="background:var(--grey-100);padding:14px;border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:8px;max-height:300px;overflow-y:auto"></div>
+              </details>
+              <div style="margin-top:16px">
+                <span class="pill pill-green">✅ Saved to Meeting Minutes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let mediaRecorder, audioChunks = [], timerInterval, seconds = 0;
+let audioBlob = null;
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(audioBlob);
+      const audio = document.getElementById('audioPlayback');
+      audio.src = url;
+      audio.style.display = 'block';
+      document.getElementById('transcribeBtn').style.display = 'block';
+      document.getElementById('recStatus').textContent = 'Recording complete. Review and submit.';
+    };
+
+    mediaRecorder.start();
+    document.getElementById('recordBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'flex';
+    document.getElementById('recStatus').textContent = '🔴 Recording…';
+    document.getElementById('recStatus').classList.add('pulse');
+
+    // Timer
+    seconds = 0;
+    timerInterval = setInterval(() => {
+      seconds++;
+      const m = String(Math.floor(seconds/60)).padStart(2,'0');
+      const s = String(seconds%60).padStart(2,'0');
+      document.getElementById('timer').textContent = `${m}:${s}`;
+    }, 1000);
+
+    // Audio level visualization
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    analyser.fftSize = 32;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    function updateLevel() {
+      if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a,b) => a+b,0) / data.length;
+      document.getElementById('audioLevel').style.width = Math.min(avg * 2, 100) + '%';
+      requestAnimationFrame(updateLevel);
+    }
+    updateLevel();
+
+  } catch(e) {
+    alert('Microphone access denied or not available: ' + e.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    clearInterval(timerInterval);
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('recordBtn').style.display = 'flex';
+    document.getElementById('recStatus').classList.remove('pulse');
+  }
+}
+
+async function submitRecording() {
+  if (!audioBlob) return alert('No recording found.');
+
+  const title = document.getElementById('meetingTitle').value || 'Meeting Minutes';
+  const date = document.getElementById('meetingDate').value;
+
+  document.getElementById('resultsPanel').style.display = 'block';
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('minutesContent').style.display = 'none';
+  document.getElementById('transcribeBtn').disabled = true;
+  document.getElementById('transcribeBtn').textContent = '⏳ Processing…';
+
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'meeting.webm');
+  formData.append('meeting_date', date);
+  formData.append('title', title);
+
+  try {
+    const res = await fetch('/vs/meeting/transcribe', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('minutesContent').style.display = 'block';
+    document.getElementById('summaryText').textContent = data.summary || 'No summary generated.';
+    document.getElementById('transcriptText').textContent = data.transcript || 'No transcript.';
+
+    const ul = document.getElementById('actionPoints');
+    ul.innerHTML = '';
+    (data.action_points || []).forEach(pt => {
+      const li = document.createElement('li');
+      li.textContent = pt;
+      ul.appendChild(li);
+    });
+    if (!data.action_points?.length) ul.innerHTML = '<li style="color:var(--grey-400)">No action points extracted.</li>';
+
+  } catch(e) {
+    document.getElementById('loadingState').innerHTML = `<div class="flash danger">Error: ${e.message}</div>`;
+  }
+}
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>
