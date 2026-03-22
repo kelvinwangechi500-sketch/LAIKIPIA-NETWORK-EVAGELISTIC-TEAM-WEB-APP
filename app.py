@@ -79,6 +79,9 @@ def create_app():
         _seed_chat_rooms()
         _migrate_db()
 
+    return app  # ← THIS WAS MISSING!
+
+
 def _seed_admin():
     from models.user import User
     from extensions import bcrypt
@@ -108,6 +111,7 @@ def _seed_chat_rooms():
             db.session.add(ChatRoom(room_id=room_id, name=name, room_type=rtype))
     db.session.commit()
 
+
 def _migrate_db():
     """Add new columns to existing tables without losing data."""
     migrations = [
@@ -127,9 +131,17 @@ def _migrate_db():
             db.session.commit()
         except Exception:
             db.session.rollback()
-            
+
+
 if __name__ == "__main__":
     app = create_app()
     socketio.run(app, debug=True, host="0.0.0.0",
                  port=int(os.environ.get("PORT", 5000)),
                  allow_unsafe_werkzeug=True)
+```
+
+---
+
+Also make sure your `Procfile` has exactly this:
+```
+web: gunicorn --worker-class eventlet -w 1 app:create_app --bind 0.0.0.0:$PORT --timeout 120
