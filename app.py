@@ -77,9 +77,9 @@ def create_app():
         db.create_all()
         _seed_admin()
         _seed_chat_rooms()
-        _migrate_db()
+        _migrate_db(app)
 
-    return app  # ← THIS WAS MISSING!
+    return app
 
 
 def _seed_admin():
@@ -112,25 +112,53 @@ def _seed_chat_rooms():
     db.session.commit()
 
 
-def _migrate_db():
-    """Add new columns to existing tables without losing data."""
+def _migrate_db(app):
+    """
+    Safely add new columns to existing tables.
+    Works with both SQLite (local) and PostgreSQL (Railway).
+    Uses information_schema to check if column exists before adding.
+    """
+    is_postgres = "postgresql" in app.config.get("SQLALCHEMY_DATABASE_URI", "")
+
+    # Define migrations: (table, column, type)
     migrations = [
-        "ALTER TABLE chat_messages ADD COLUMN msg_type VARCHAR(20) DEFAULT 'text'",
-        "ALTER TABLE chat_messages ADD COLUMN file_url VARCHAR(500)",
-        "ALTER TABLE chat_messages ADD COLUMN file_name VARCHAR(200)",
-        "ALTER TABLE chat_messages ADD COLUMN file_size INTEGER",
-        "ALTER TABLE chat_messages ADD COLUMN reply_to_id INTEGER",
-        "ALTER TABLE chat_messages ADD COLUMN is_deleted BOOLEAN DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN residence VARCHAR(150)",
-        "ALTER TABLE users ADD COLUMN year VARCHAR(50)",
+        ("chat_messages", "msg_type",    "VARCHAR(20) DEFAULT 'text'"),
+        ("chat_messages", "file_url",    "VARCHAR(500)"),
+        ("chat_messages", "file_name",   "VARCHAR(200)"),
+        ("chat_messages", "file_size",   "INTEGER"),
+        ("chat_messages", "reply_to_id", "INTEGER"),
+        ("chat_messages", "is_deleted",  "BOOLEAN DEFAULT FALSE"),
+        ("users",         "residence",   "VARCHAR(150)"),
+        ("users",         "year",        "VARCHAR(50)"),
     ]
-    from extensions import db
-    for sql in migrations:
-        try:
-            db.session.execute(db.text(sql))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+
+    with db.engine.connect() as conn:
+        for table, column, col_type in migrations:
+            try:
+                if is_postgres:
+                    # PostgreSQL: check information_schema first
+                    check = conn.execute(db.text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name=:t AND column_name=:c"
+                    ), {"t": table, "c": column})
+                    if check.fetchone() is None:
+                        conn.execute(db.text(
+                            f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
+                        ))
+                        conn.commit()
+                        print(f"✅ Migrated: {table}.{column}")
+                else:
+                    # SQLite: just try, ignore if exists
+                    conn.execute(db.text(
+                        f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
+                    ))
+                    conn.commit()
+            except Exception as e:
+                # Column already exists — that's fine
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
 
 
 if __name__ == "__main__":
@@ -142,6 +170,6 @@ if __name__ == "__main__":
 
 ---
 
-Also make sure your `Procfile` has exactly this:
+Also update `Procfile` — open it and replace with:
 ```
 web: gunicorn --worker-class eventlet -w 1 app:create_app --bind 0.0.0.0:$PORT --timeout 120
