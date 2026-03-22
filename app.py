@@ -77,9 +77,7 @@ def create_app():
         db.create_all()
         _seed_admin()
         _seed_chat_rooms()
-
-    return app
-
+        _migrate_db()
 
 def _seed_admin():
     from models.user import User
@@ -110,7 +108,26 @@ def _seed_chat_rooms():
             db.session.add(ChatRoom(room_id=room_id, name=name, room_type=rtype))
     db.session.commit()
 
-
+def _migrate_db():
+    """Add new columns to existing tables without losing data."""
+    migrations = [
+        "ALTER TABLE chat_messages ADD COLUMN msg_type VARCHAR(20) DEFAULT 'text'",
+        "ALTER TABLE chat_messages ADD COLUMN file_url VARCHAR(500)",
+        "ALTER TABLE chat_messages ADD COLUMN file_name VARCHAR(200)",
+        "ALTER TABLE chat_messages ADD COLUMN file_size INTEGER",
+        "ALTER TABLE chat_messages ADD COLUMN reply_to_id INTEGER",
+        "ALTER TABLE chat_messages ADD COLUMN is_deleted BOOLEAN DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN residence VARCHAR(150)",
+        "ALTER TABLE users ADD COLUMN year VARCHAR(50)",
+    ]
+    from extensions import db
+    for sql in migrations:
+        try:
+            db.session.execute(db.text(sql))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            
 if __name__ == "__main__":
     app = create_app()
     socketio.run(app, debug=True, host="0.0.0.0",
