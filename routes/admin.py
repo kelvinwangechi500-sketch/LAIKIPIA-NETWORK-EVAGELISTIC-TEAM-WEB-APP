@@ -82,6 +82,18 @@ def delete_member(uid):
     flash("Member deleted.", "info")
     return redirect(url_for("admin.members"))
 
+@admin_bp.route("/members/<int:uid>/edit", methods=["POST"])
+@login_required
+@admin_required
+def edit_member(uid):
+    user = User.query.get_or_404(uid)
+    db.session.edit(user)
+    db.session.commit()
+    flash("Member edited.", "info")
+    return redirect(url_for("admin.members"))
+
+
+
 
 # ── Announcements ─────────────────────────────────────────────────────────────
 @admin_bp.route("/announcements")
