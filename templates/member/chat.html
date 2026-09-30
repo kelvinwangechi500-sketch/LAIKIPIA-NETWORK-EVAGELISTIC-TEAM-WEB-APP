@@ -2,651 +2,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Chat — NET Platform</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat — NETWORK Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
-<style>
-/* ── WhatsApp Chat Styles ── */
-.chat-app{display:flex;height:calc(100vh - 64px);background:#111b21;border-radius:12px;overflow:hidden;border:1px solid #2a3942}
-
-/* Left: chat list */
-.chat-left{width:360px;min-width:360px;display:flex;flex-direction:column;background:#111b21;border-right:1px solid #2a3942}
-@media(max-width:900px){.chat-left{width:100%;min-width:100%}.chat-right{display:none}.chat-right.active{display:flex;position:fixed;inset:0;z-index:500;background:#0b141a;flex-direction:column}}
-@media(max-width:600px){
-  .app-shell{flex-direction:column}
-  .chat-app{height:calc(100vh - 56px);border-radius:0;margin:0!important;border:none}
-  .main-content{padding:0!important}
-  .content-body{padding:0!important;height:100%}
-  .topbar{height:50px;padding:0 10px}
-  .msg-row{max-width:88%!important}
-  .cr-msgs{padding:8px 6px!important}
-  .cr-input{padding:6px 8px;gap:5px}
-  .msg-ta{font-size:16px;padding:8px 10px}
-  .send-b{width:40px;height:40px;font-size:17px}
-  .emoji-btn,.attach-btn{padding:6px;font-size:19px}
-  .cl-item{padding:8px 12px}
-  .cl-avatar{width:42px;height:42px;font-size:16px}
-  .cr-av{width:34px;height:34px;font-size:14px}
-  .epicker{width:260px;bottom:50px}
-}
-
-.cl-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#202c33;height:56px;flex-shrink:0}
-.cl-title{font-size:17px;font-weight:600;color:#e9edef}
-.cl-actions{display:flex;gap:4px}
-.cl-btn{background:none;border:none;color:#aebac1;font-size:18px;cursor:pointer;padding:7px;border-radius:50%;transition:.2s}
-.cl-btn:hover{background:#2a3942;color:#e9edef}
-
-.cl-search{padding:8px 12px;background:#111b21;flex-shrink:0}
-.cl-search input{width:100%;background:#202c33;border:none;border-radius:8px;padding:8px 12px 8px 36px;color:#e9edef;font-size:14px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23aebac1\' stroke-width=\'2\'%3E%3Ccircle cx=\'11\' cy=\'11\' r=\'8\'/%3E%3Cpath d=\'m21 21-4.35-4.35\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center}
-.cl-search input::placeholder{color:#8696a0}
-
-.cl-tabs{display:flex;border-bottom:1px solid #2a3942;flex-shrink:0}
-.cl-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:#8696a0;border-bottom:2px solid transparent;transition:.2s}
-.cl-tab.active{color:#00a884;border-bottom-color:#00a884}
-
-.cl-list{flex:1;overflow-y:auto}
-.cl-list::-webkit-scrollbar{width:5px}
-.cl-list::-webkit-scrollbar-thumb{background:#2a3942;border-radius:3px}
-
-.cl-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #1f2c33;transition:.15s}
-.cl-item:hover,.cl-item.active{background:#2a3942}
-.cl-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0;position:relative}
-.av-group{background:#00a884;color:#111b21}
-.av-dm{background:#6b4fbb;color:#fff}
-.online-dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;background:#00a884;border-radius:50%;border:2px solid #111b21}
-.cl-info{flex:1;min-width:0}
-.cl-name{font-size:15px;font-weight:500;color:#e9edef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cl-prev{font-size:13px;color:#8696a0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.cl-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
-.cl-time{font-size:11px;color:#8696a0}
-.cl-badge{background:#00a884;color:#111b21;border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-
-/* Right: message area */
-.chat-right{flex:1;display:flex;flex-direction:column;background:#0b141a;position:relative}
-
-/* Welcome */
-.chat-welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8696a0;gap:14px;padding:20px;text-align:center}
-.chat-welcome img{width:160px;height:160px;border-radius:50%;opacity:.2;object-fit:cover}
-.chat-welcome h2{font-size:24px;font-weight:300;color:#e9edef}
-.chat-welcome p{font-size:13px;max-width:340px;line-height:1.6}
-
-/* Chat header */
-.cr-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#202c33;height:56px;flex-shrink:0}
-.cr-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
-.cr-info{flex:1}
-.cr-name{font-size:15px;font-weight:600;color:#e9edef}
-.cr-status{font-size:12px;color:#8696a0}
-.cr-actions{display:flex;gap:4px}
-
-/* Messages */
-.cr-msgs{flex:1;overflow-y:auto;padding:14px 50px;display:flex;flex-direction:column;gap:2px;scroll-behavior:smooth}
-.cr-msgs::-webkit-scrollbar{width:5px}
-.cr-msgs::-webkit-scrollbar-thumb{background:#2a3942;border-radius:3px}
-@media(max-width:900px){.cr-msgs{padding:10px 8px}}
-
-.date-sep{text-align:center;margin:10px 0}
-.date-sep span{background:#182229;color:#8696a0;font-size:11px;padding:4px 12px;border-radius:8px}
-
-/* Bubbles */
-.msg-row{display:flex;flex-direction:column;max-width:65%;margin-bottom:1px}
-.msg-row.own{align-self:flex-end;align-items:flex-end}
-.msg-row.other{align-self:flex-start;align-items:flex-start}
-.msg-sender{font-size:12px;font-weight:600;color:#00a884;margin-bottom:2px;padding-left:3px}
-.msg-row.own .msg-sender{display:none}
-.bubble{padding:6px 11px 20px;border-radius:8px;position:relative;min-width:70px;word-break:break-word;line-height:1.5;font-size:14px}
-.msg-row.own .bubble{background:#005c4b;border-radius:8px 0 8px 8px;color:#e9edef}
-.msg-row.other .bubble{background:#202c33;border-radius:0 8px 8px 8px;color:#e9edef}
-.msg-deleted .bubble{color:#8696a0!important;font-style:italic}
-.msg-time{position:absolute;bottom:3px;right:7px;font-size:11px;color:#8696a0;display:flex;align-items:center;gap:2px;white-space:nowrap}
-.tick{font-size:12px}
-.tick.read{color:#53bdeb}
-
-/* Reply preview */
-.rp{background:rgba(0,0,0,.2);border-left:3px solid #00a884;padding:5px 9px;border-radius:4px;margin-bottom:5px;font-size:12px}
-.rp-name{color:#00a884;font-weight:600;margin-bottom:1px}
-.rp-body{color:#aebac1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* Media */
-.msg-img{max-width:250px;max-height:260px;border-radius:6px;cursor:zoom-in;display:block;object-fit:cover}
-.msg-pdf{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.2);padding:9px;border-radius:6px;text-decoration:none;color:#e9edef}
-.msg-pdf-icon{font-size:24px;flex-shrink:0}
-.msg-pdf-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.msg-pdf-size{font-size:11px;color:#8696a0;margin-top:1px}
-.msg-audio audio{width:210px;height:34px}
-
-/* Typing */
-.typing-bar{min-height:22px;padding:2px 50px;font-size:13px;color:#00a884}
-@media(max-width:900px){.typing-bar{padding:2px 10px}}
-.tdots{display:inline-flex;gap:3px;align-items:center;margin-left:4px}
-.tdots span{width:5px;height:5px;background:#00a884;border-radius:50%;animation:td .8s infinite}
-.tdots span:nth-child(2){animation-delay:.15s}
-.tdots span:nth-child(3){animation-delay:.3s}
-@keyframes td{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
-
-/* Reply bar */
-.reply-bar{background:#182229;border-left:4px solid #00a884;padding:7px 12px;margin:0 16px 5px;border-radius:4px;display:none;align-items:center;gap:8px;flex-shrink:0}
-.reply-bar.show{display:flex}
-.rb-content{flex:1;min-width:0}
-.rb-name{font-size:12px;color:#00a884;font-weight:600}
-.rb-text{font-size:12px;color:#aebac1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rb-x{background:none;border:none;color:#8696a0;font-size:18px;cursor:pointer}
-
-/* Input area */
-.cr-input{padding:8px 14px;background:#202c33;display:flex;align-items:flex-end;gap:8px;flex-shrink:0;position:relative}
-.emoji-wrap{position:relative;flex-shrink:0}
-.emoji-btn{background:none;border:none;font-size:21px;cursor:pointer;padding:7px;color:#aebac1;transition:.2s;display:flex;align-items:center}
-.emoji-btn:hover{color:#e9edef}
-.attach-btn{background:none;border:none;font-size:21px;cursor:pointer;padding:7px;color:#aebac1;flex-shrink:0;transition:.2s;display:flex;align-items:center}
-.attach-btn:hover{color:#e9edef;transform:rotate(45deg)}
-.msg-ta{flex:1;background:#2a3942;border:none;border-radius:8px;padding:9px 13px;color:#e9edef;font-size:14px;outline:none;resize:none;max-height:110px;font-family:inherit;line-height:1.5}
-.msg-ta::placeholder{color:#8696a0}
-.send-b{width:44px;height:44px;border-radius:50%;background:#00a884;border:none;color:#fff;font-size:19px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.2s}
-.send-b:hover{background:#00cf9d;transform:scale(1.05)}
-
-/* Emoji picker */
-.epicker{position:absolute;bottom:54px;left:0;background:#233138;border-radius:10px;padding:10px;display:none;z-index:300;box-shadow:0 8px 28px rgba(0,0,0,.5);flex-wrap:wrap;gap:3px;width:290px;max-height:200px;overflow-y:auto}
-.epicker.show{display:flex}
-.epicker span{font-size:21px;cursor:pointer;padding:3px;border-radius:5px;transition:.15s;line-height:1}
-.epicker span:hover{background:#2a3942;transform:scale(1.2)}
-
-/* Context menu */
-.ctx{position:fixed;background:#233138;border-radius:8px;padding:4px 0;z-index:1000;display:none;box-shadow:0 4px 18px rgba(0,0,0,.6);min-width:155px}
-.ctx.show{display:block}
-.ctx-i{padding:9px 15px;font-size:14px;cursor:pointer;color:#e9edef;display:flex;align-items:center;gap:9px;transition:.15s}
-.ctx-i:hover{background:#2a3942}
-.ctx-i.danger{color:#f15c6d}
-
-/* Image modal */
-.img-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;display:none;align-items:center;justify-content:center}
-.img-modal.show{display:flex}
-.img-modal img{max-width:90vw;max-height:88vh;border-radius:8px;object-fit:contain}
-.img-close{position:fixed;top:14px;right:14px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:20px;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-
-/* DM modal */
-.dm-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1500;display:none;align-items:center;justify-content:center}
-.dm-modal.show{display:flex}
-.dm-box{background:#233138;border-radius:12px;padding:22px;width:340px;max-width:90vw;max-height:78vh;display:flex;flex-direction:column;gap:10px}
-.dm-box h3{color:#e9edef;font-size:15px}
-.dm-search{background:#2a3942;border:none;border-radius:8px;padding:9px 13px;color:#e9edef;font-size:14px;outline:none;width:100%}
-.dm-search::placeholder{color:#8696a0}
-.dm-list{overflow-y:auto;flex:1;max-height:320px}
-.dm-item{display:flex;align-items:center;gap:11px;padding:9px 3px;cursor:pointer;border-bottom:1px solid #2a3942;transition:.15s}
-.dm-item:hover{background:#2a3942;border-radius:7px;padding-left:7px}
-.dm-av{width:40px;height:40px;border-radius:50%;background:#6b4fbb;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0;position:relative}
-.dm-name{color:#e9edef;font-size:14px;font-weight:500}
-.dm-role{color:#8696a0;font-size:12px;margin-top:1px}
-
-/* Upload toast */
-.up-toast{position:fixed;bottom:80px;right:18px;background:#233138;border-radius:9px;padding:10px 16px;color:#e9edef;font-size:13px;display:none;align-items:center;gap:9px;z-index:400;box-shadow:0 4px 18px rgba(0,0,0,.4)}
-.up-toast.show{display:flex}
-
-/* Offline bar */
-.offline-bar{display:none;background:#92400e;color:#fef3c7;padding:7px 16px;font-size:12px;text-align:center;flex-shrink:0}
-.offline-bar.show{display:block}
-
-/* Reactions */
-.rxn-row{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap}
-.rxn-pill{background:#2a3942;border-radius:11px;padding:2px 7px;font-size:13px;cursor:default;border:1px solid #3a4a52}
-</style>
 </head>
 <body>
 <div class="app-shell">
-  {{ sidebar('chat', current_user.role, current_user) }}
-  <div class="main-content" style="padding:0;height:calc(100vh - 64px);display:flex;flex-direction:column">
-    <div class="topbar" style="flex-shrink:0">
+  {{ sidebar('chat', 'member', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
       <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
       <div class="topbar-title">💬 Team Chat</div>
       <div class="topbar-actions">
-        <span id="onlineBadge" style="font-size:12px;padding:4px 10px;border-radius:20px;background:#d1fae5;color:#065f46">🟢 Online</span>
+        <span id="onlineStatus" style="font-size:12px;padding:4px 10px;border-radius:20px;background:#d1fae5;color:#065f46">🟢 Online</span>
       </div>
     </div>
-
-    <div class="chat-app" style="flex:1;margin:0 12px 12px">
-
-      <!-- LEFT: Chat list -->
-      <div class="chat-left">
-        <div class="cl-header">
-          <span class="cl-title">Chats</span>
-          <div class="cl-actions">
-            <button class="cl-btn" onclick="showDMModal()" title="New message">✏️</button>
+    <div class="content-body">
+      <div class="chat-wrap">
+        <!-- Room List -->
+        <div class="chat-sidebar">
+          <div class="chat-sidebar-hdr">💬 Rooms</div>
+          <div class="chat-rooms">
+            <div class="chat-room active" onclick="switchRoom('general', this)">
+              <div class="rn"># General</div>
+              <div class="rl">All members</div>
+            </div>
+            <div class="chat-room" onclick="switchRoom('announcements', this)">
+              <div class="rn"># Announcements</div>
+              <div class="rl">Read-only updates</div>
+            </div>
+            <div class="chat-room" onclick="switchRoom('prayer', this)">
+              <div class="rn"># Prayer Requests</div>
+              <div class="rl">Share prayer needs</div>
+            </div>
+            <div class="chat-room" onclick="switchRoom('events', this)">
+              <div class="rn"># Events</div>
+              <div class="rl">Upcoming activities</div>
+            </div>
           </div>
         </div>
-        <div class="cl-search">
-          <input type="text" placeholder="Search chats…" oninput="filterChats(this.value)">
+
+        <!-- Message Area -->
+        <div class="chat-main">
+          <div class="chat-hdr" id="roomTitle">💬 # general</div>
+          <div class="offline-bar" id="offlineBar">
+            ⚠️ You are offline. Messages are being saved locally and will sync when you reconnect.
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div style="text-align:center;color:var(--grey-400);font-size:12px;padding:20px">
+              Loading messages…
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" id="chatInput" class="chat-input"
+                   placeholder="Type a message… (Enter to send)"
+                   onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendMessage();event.preventDefault()}">
+            <button onclick="sendMessage()" class="btn btn-primary btn-sm">Send ➤</button>
+          </div>
         </div>
-        <div class="cl-tabs">
-          <div class="cl-tab active" onclick="switchTab('all',this)">All</div>
-          <div class="cl-tab" onclick="switchTab('groups',this)">Groups</div>
-          <div class="cl-tab" onclick="switchTab('dms',this)">Direct</div>
-        </div>
-        <div class="cl-list" id="chatList"></div>
       </div>
 
-      <!-- RIGHT: Messages -->
-      <div class="chat-right" id="chatRight">
-
-        <!-- Welcome -->
-        <div class="chat-welcome" id="chatWelcome">
-          <img src="data:image/png;base64,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" alt="NET">
-          <h2>NET Platform Chat</h2>
-          <p>Select a conversation to start messaging your team.</p>
-          <p style="font-size:12px;color:#4a535a;margin-top:4px">✝️ Network Evangelistic Team</p>
-        </div>
-
-        <!-- Chat view (hidden until room selected) -->
-        <div id="chatView" style="display:none;flex-direction:column;height:100%;overflow:hidden">
-
-          <!-- Header -->
-          <div class="cr-header">
-            <button class="cl-btn" id="backBtn" style="display:none" onclick="closeChat()">←</button>
-            <div class="cr-av av-group" id="crAvatar">?</div>
-            <div class="cr-info">
-              <div class="cr-name" id="crName">Room</div>
-              <div class="cr-status" id="crStatus">…</div>
-            </div>
-            <div class="cr-actions">
-              <button class="cl-btn" title="Search messages" onclick="document.getElementById('msgTA').focus()">🔍</button>
-            </div>
-          </div>
-
-          <!-- Offline bar -->
-          <div class="offline-bar" id="offlineBar">⚠️ You are offline — messages will sync when reconnected</div>
-
-          <!-- Messages -->
-          <div class="cr-msgs" id="crMsgs" style="flex:1;overflow-y:auto"></div>
-
-          <!-- Typing -->
-          <div class="typing-bar" id="typingBar"></div>
-
-          <!-- Reply bar -->
-          <div class="reply-bar" id="replyBar">
-            <div class="rb-content">
-              <div class="rb-name" id="rbName"></div>
-              <div class="rb-text" id="rbText"></div>
-            </div>
-            <button class="rb-x" onclick="cancelReply()">✕</button>
-          </div>
-
-          <!-- Input -->
-          <div class="cr-input">
-            <div class="emoji-wrap">
-              <button class="emoji-btn" onclick="toggleEmoji(event)" title="Emoji">😊</button>
-              <div class="epicker" id="epicker"></div>
-            </div>
-            <input type="file" id="fileIn" accept="image/*,.pdf,audio/*" style="display:none" onchange="uploadFile(this)">
-            <button class="attach-btn" onclick="document.getElementById('fileIn').click()" title="Attach">📎</button>
-            <textarea class="msg-ta" id="msgTA" placeholder="Type a message" rows="1"
-              oninput="autoResize(this);handleTyping()"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){doSend();event.preventDefault()}"></textarea>
-            <button class="send-b" onclick="doSend()">➤</button>
-          </div>
-        </div>
+      <div style="font-size:12px;color:var(--grey-400);margin-top:10px;text-align:center">
+        🔄 Messages sync automatically when online · Offline messages stored locally
       </div>
     </div>
   </div>
 </div>
-
-<!-- Image viewer -->
-<div class="img-modal" id="imgModal" onclick="closeImgModal()">
-  <button class="img-close" onclick="closeImgModal()">✕</button>
-  <img id="imgSrc" src="" alt="">
-</div>
-
-<!-- New DM modal -->
-<div class="dm-modal" id="dmModal">
-  <div class="dm-box">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h3>New Message</h3>
-      <button onclick="closeDMModal()" style="background:none;border:none;color:#8696a0;font-size:20px;cursor:pointer">✕</button>
-    </div>
-    <input class="dm-search" type="text" placeholder="Search members…" oninput="filterMembers(this.value)">
-    <div class="dm-list" id="dmList"></div>
-  </div>
-</div>
-
-<!-- Context menu -->
-<div class="ctx" id="ctx">
-  <div class="ctx-i" onclick="doReply()">↩️&nbsp; Reply</div>
-  <div class="ctx-i" onclick="doCopy()">📋&nbsp; Copy</div>
-  <div class="ctx-i" onclick="doReact()">😊&nbsp; React</div>
-  <div class="ctx-i danger" onclick="doDelete()">🗑️&nbsp; Delete</div>
-</div>
-
-<!-- Upload toast -->
-<div class="up-toast" id="upToast"><span id="upText">Uploading…</span></div>
 
 <script>
-// ── Constants ──────────────────────────────────────────────────────────────
-const ME_ID   = {{ current_user.id }};
-const ME_NAME = {{ current_user.full_name | tojson }};
-const ME_AV   = {{ current_user.full_name[0].upper() | tojson }};
+// ── CHAT STATE ────────────────────────────────────────────────────────────────
+const ME = {{ current_user.id }};
+const ME_NAME = "{{ current_user.full_name }}";
+let currentRoom = 'general';
+let isOnline = navigator.onLine;
 
-// ── State ──────────────────────────────────────────────────────────────────
-let socket=null, currentRoom=null, currentRoomType=null, currentRoomUID=null;
-let allChats=[], allMembers=[], replyData=null, ctxMsg=null;
-let typingTimer=null, isTyping=false, typingUsers={}, onlineUsers=new Set();
+// ── INDEXEDDB SETUP ───────────────────────────────────────────────────────────
+let db;
+const DB_NAME = 'net_chat_db';
+const STORE = 'outbox';
 
-// ── IndexedDB (offline queue) ──────────────────────────────────────────────
-let idb=null;
-async function openIDB(){
-  return new Promise((res,rej)=>{
-    const r=indexedDB.open('net_chat_v2',1);
-    r.onupgradeneeded=e=>{
-      const d=e.target.result;
-      if(!d.objectStoreNames.contains('outbox'))
-        d.createObjectStore('outbox',{keyPath:'client_id'});
+async function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const store = db.createObjectStore(STORE, { keyPath: 'client_id' });
+        store.createIndex('room', 'room', { unique: false });
+      }
     };
-    r.onsuccess=e=>res(e.target.result);
-    r.onerror=()=>rej('IDB error');
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject('IndexedDB error');
   });
 }
-async function idbSave(msg){const tx=idb.transaction('outbox','readwrite');tx.objectStore('outbox').put(msg);return new Promise(r=>tx.oncomplete=r)}
-async function idbAll(){return new Promise(r=>{const tx=idb.transaction('outbox','readonly');const q=tx.objectStore('outbox').getAll();q.onsuccess=()=>r(q.result)})}
-async function idbDel(id){const tx=idb.transaction('outbox','readwrite');tx.objectStore('outbox').delete(id);return new Promise(r=>tx.oncomplete=r)}
 
-// ── Boot ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',async()=>{
-  idb=await openIDB();
-  initSocket();
-  buildChats();
-  loadMembers();
-  buildEmoji();
-  document.addEventListener('click',()=>{
-    document.getElementById('epicker').classList.remove('show');
-    document.getElementById('ctx').classList.remove('show');
-  });
-  window.addEventListener('online',onOnline);
-  window.addEventListener('offline',onOffline);
-  updateConnBadge();
-});
-
-// ── Build chat list from Jinja data ───────────────────────────────────────
-function buildChats(){
-  const groups = {{ group_rooms | tojson }};
-  const dms    = {{ dm_data | tojson }};
-  allChats=[...groups.map(r=>({...r,type:'group'})),...dms.map(r=>({...r,type:'dm'}))];
-  renderChats(allChats);
+async function saveToOutbox(msg) {
+  const tx = db.transaction(STORE, 'readwrite');
+  tx.objectStore(STORE).put(msg);
+  return new Promise(r => tx.oncomplete = r);
 }
 
-function renderChats(list){
-  const el=document.getElementById('chatList');
-  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#8696a0;font-size:13px">No chats yet.<br>Tap ✏️ to message someone.</div>';return;}
-  el.innerHTML=list.map(c=>{
-    const av=(c.name||'?')[0].toUpperCase();
-    const isOn=c.type==='dm'&&onlineUsers.has(parseInt(c.user_id||0));
-    const dot=isOn?'<div class="online-dot"></div>':'';
-    const badge=(c.unread>0)?`<div class="cl-badge" id="badge-${c.room_id}">${c.unread}</div>`:`<div class="cl-badge" id="badge-${c.room_id}" style="display:none">0</div>`;
-    return`<div class="cl-item${currentRoom===c.room_id?' active':''}" id="ci-${c.room_id}"
-      onclick="openRoom('${escJ(c.room_id)}','${escJ(c.name)}','${c.type}',${c.user_id||0})">
-      <div class="cl-avatar ${c.type==='group'?'av-group':'av-dm'}">${av}${dot}</div>
-      <div class="cl-info">
-        <div class="cl-name">${esc(c.name)}</div>
-        <div class="cl-prev" id="prev-${c.room_id}">${esc(c.last_msg||'')}</div>
-      </div>
-      <div class="cl-meta">
-        <div class="cl-time" id="time-${c.room_id}">${c.last_time||''}</div>
-        ${badge}
-      </div>
+async function getOutbox() {
+  return new Promise(resolve => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result);
+  });
+}
+
+async function clearOutboxItem(client_id) {
+  const tx = db.transaction(STORE, 'readwrite');
+  tx.objectStore(STORE).delete(client_id);
+  return new Promise(r => tx.oncomplete = r);
+}
+
+// ── SEND MESSAGE ──────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const body = input.value.trim();
+  if (!body) return;
+  input.value = '';
+
+  const msg = {
+    client_id: crypto.randomUUID(),
+    room: currentRoom,
+    body: body,
+    sender_id: ME,
+    sender_name: ME_NAME,
+    created_at: new Date().toISOString(),
+    synced: false
+  };
+
+  // Render optimistically
+  appendMessage(msg, true);
+
+  if (isOnline) {
+    try {
+      const res = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ room: msg.room, body: msg.body, client_id: msg.client_id })
+      });
+      if (!res.ok) throw new Error('Send failed');
+      msg.synced = true;
+    } catch {
+      // Fall through to save offline
+      await saveToOutbox(msg);
+    }
+  } else {
+    // Save to IndexedDB outbox
+    msg.synced = false;
+    await saveToOutbox(msg);
+  }
+}
+
+// ── LOAD MESSAGES FROM SERVER ─────────────────────────────────────────────────
+async function loadMessages() {
+  const container = document.getElementById('chatMessages');
+  try {
+    const res = await fetch(`/api/chat/messages?room=${currentRoom}&limit=50`);
+    const messages = await res.json();
+    container.innerHTML = '';
+    messages.forEach(m => appendMessage(m, m.sender_id === ME));
+
+    // Also show unsynced local messages
+    const outbox = await getOutbox();
+    outbox.filter(m => m.room === currentRoom && !m.synced)
+          .forEach(m => appendMessage(m, true, true));
+
+    container.scrollTop = container.scrollHeight;
+  } catch {
+    container.innerHTML = '<div class="empty-state">Could not load messages. You may be offline.</div>';
+    // Load from local cache
+    const outbox = await getOutbox();
+    outbox.filter(m => m.room === currentRoom)
+          .forEach(m => appendMessage(m, m.sender_id === ME, !m.synced));
+  }
+}
+
+function appendMessage(m, isOwn, isPending=false) {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${isOwn ? 'own' : 'other'}`;
+  const time = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  div.innerHTML = `
+    <div class="msg-bubble">${escapeHtml(m.body)}</div>
+    <div class="msg-meta">
+      ${isOwn ? '' : `<strong>${escapeHtml(m.sender_name||'')}</strong> · `}
+      ${time}${isPending ? ' · <span style="color:#92400e">⏳ Pending sync</span>' : ''}
     </div>`;
-  }).join('');
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
 }
 
-// ── Socket ─────────────────────────────────────────────────────────────────
-function initSocket(){
-  socket=io({transports:['websocket','polling']});
-  socket.on('connect',()=>{if(currentRoom)socket.emit('join',{room:currentRoom})});
-  socket.on('new_message',msg=>{
-    if(msg.room===currentRoom){appendMsg(msg);scrollBot();socket.emit('mark_read',{room:currentRoom,msg_id:msg.id})}
-    updatePreview(msg);
-    if(msg.sender_id!==ME_ID)ping();
-  });
-  socket.on('typing',d=>{
-    if(d.user_id===ME_ID)return;
-    if(d.typing)typingUsers[d.user_id]=d.name;else delete typingUsers[d.user_id];
-    showTyping();
-  });
-  socket.on('user_online',d=>{onlineUsers.add(parseInt(d.user_id));refreshDots();if(currentRoomUID===parseInt(d.user_id))setStatus('online',true)});
-  socket.on('user_offline',d=>{onlineUsers.delete(parseInt(d.user_id));refreshDots();if(currentRoomUID===parseInt(d.user_id))setStatus('last seen recently',false)});
-  socket.on('online_users',d=>{d.users.forEach(u=>onlineUsers.add(parseInt(u)));refreshDots()});
-  socket.on('message_deleted',d=>{
-    const el=document.getElementById('msg-'+d.id);
-    if(el){el.classList.add('msg-deleted');const b=el.querySelector('.bubble');if(b)b.innerHTML='<em>🚫 This message was deleted</em><span class="msg-time"></span>'}
-  });
-  socket.on('message_read',d=>{const t=document.getElementById('tick-'+d.msg_id);if(t){t.textContent='✓✓';t.className='tick read'}});
-  socket.on('reaction',d=>addRxn(d.msg_id,d.emoji,d.name));
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Open room ──────────────────────────────────────────────────────────────
-async function openRoom(rid,name,type,uid){
-  if(currentRoom)socket.emit('leave',{room:currentRoom});
-  currentRoom=rid;currentRoomType=type;currentRoomUID=parseInt(uid)||null;
-  document.getElementById('crAvatar').textContent=(name||'?')[0].toUpperCase();
-  document.getElementById('crAvatar').className='cr-av '+(type==='group'?'av-group':'av-dm');
-  document.getElementById('crName').textContent=name;
-  const isOn=type==='dm'&&onlineUsers.has(parseInt(uid));
-  setStatus(type==='group'?'Group chat':(isOn?'online':'last seen recently'),isOn);
-  document.getElementById('chatWelcome').style.display='none';
-  document.getElementById('chatView').style.display='flex';
-  if(window.innerWidth<=900){document.getElementById('chatRight').classList.add('active');document.getElementById('backBtn').style.display='flex'}
-  document.querySelectorAll('.cl-item').forEach(e=>e.classList.remove('active'));
-  const ci=document.getElementById('ci-'+rid);if(ci)ci.classList.add('active');
-  const b=document.getElementById('badge-'+rid);if(b)b.style.display='none';
-  socket.emit('join',{room:rid});
-  await loadMsgs(rid);
-  document.getElementById('msgTA').focus();
-}
-
-// ── Load messages ──────────────────────────────────────────────────────────
-async function loadMsgs(rid){
-  const wrap=document.getElementById('crMsgs');
-  wrap.innerHTML='<div style="text-align:center;padding:30px;color:#8696a0;font-size:13px">Loading…</div>';
-  try{
-    const res=await fetch('/chat/messages/'+rid);
-    const msgs=await res.json();
-    wrap.innerHTML='';
-    if(!msgs.length){wrap.innerHTML='<div style="text-align:center;padding:50px;color:#8696a0;font-size:13px">No messages yet. Say hello 👋</div>';return}
-    let lastD=null;
-    msgs.forEach(m=>{
-      const d=m.created_at.split('T')[0];
-      if(d!==lastD){wrap.appendChild(mkDateDiv(d));lastD=d}
-      appendMsg(m,false);
+// ── SYNC OUTBOX ───────────────────────────────────────────────────────────────
+async function syncOutbox() {
+  const pending = await getOutbox();
+  if (!pending.length) return;
+  try {
+    const res = await fetch('/api/chat/sync', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ messages: pending })
     });
-    scrollBot(true);
-    fetch('/chat/read/'+rid,{method:'POST'});
-    // Show pending offline messages
-    const pending=await idbAll();
-    pending.filter(m=>m.room===rid).forEach(m=>appendMsg(m,true,true));
-  }catch{wrap.innerHTML='<div style="text-align:center;padding:30px;color:#f15c6d">Failed to load. Check connection.</div>'}
-}
-
-function mkDateDiv(ds){
-  const el=document.createElement('div');el.className='date-sep';
-  const d=new Date(ds+'T00:00:00');
-  const today=new Date();today.setHours(0,0,0,0);
-  const yest=new Date(today);yest.setDate(today.getDate()-1);
-  const ts=d.getTime();
-  let label=ts===today.getTime()?'Today':ts===yest.getTime()?'Yesterday':d.toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'});
-  el.innerHTML=`<span>${label}</span>`;return el;
-}
-
-// ── Render message ─────────────────────────────────────────────────────────
-function appendMsg(msg,animate=true,pending=false){
-  const wrap=document.getElementById('crMsgs');
-  const isOwn=msg.sender_id===ME_ID;
-  const row=document.createElement('div');
-  row.className='msg-row '+(isOwn?'own':'other')+(msg.is_deleted?' msg-deleted':'');
-  row.id='msg-'+msg.id;
-  row.dataset.id=msg.id;row.dataset.body=msg.body;row.dataset.sender=msg.sender_name;
-  row.addEventListener('contextmenu',e=>{e.preventDefault();showCtx(e,msg)});
-
-  const tick=isOwn?`<span class="tick ${msg.read_count>0?'read':'delivered'}" id="tick-${msg.id}">✓✓</span>`:'';
-  const rpHtml=msg.reply_to?`<div class="rp"><div class="rp-name">${esc(msg.reply_to.sender)}</div><div class="rp-body">${esc(msg.reply_to.body)}</div></div>`:'';
-  const sndrHtml=!isOwn?`<div class="msg-sender">${esc(msg.sender_name)}</div>`:'';
-  const pend=pending?` · <span style="color:#92400e;font-size:11px">⏳</span>`:'';
-
-  let inner='';
-  if(msg.is_deleted){
-    inner=`<div class="bubble"><em>🚫 This message was deleted</em><span class="msg-time"></span></div>`;
-  }else if(msg.msg_type==='image'&&msg.file_url){
-    inner=`${sndrHtml}<div class="bubble" style="padding:4px 4px 22px">${rpHtml}<img src="${msg.file_url}" class="msg-img" loading="lazy" onclick="openImg('${msg.file_url}')"><span class="msg-time">${msg.time}${tick}${pend}</span></div>`;
-  }else if(msg.msg_type==='pdf'&&msg.file_url){
-    inner=`${sndrHtml}<div class="bubble">${rpHtml}<a href="${msg.file_url}" target="_blank" class="msg-pdf"><span class="msg-pdf-icon">📄</span><div><div class="msg-pdf-name">${esc(msg.file_name||'Document')}</div><div class="msg-pdf-size">${fmtSz(msg.file_size)}</div></div></a><span class="msg-time">${msg.time}${tick}${pend}</span></div>`;
-  }else if(msg.msg_type==='audio'&&msg.file_url){
-    inner=`${sndrHtml}<div class="bubble" style="padding:9px 9px 24px">${rpHtml}<audio controls src="${msg.file_url}" class="msg-audio"></audio><span class="msg-time">${msg.time}${tick}${pend}</span></div>`;
-  }else{
-    inner=`${sndrHtml}<div class="bubble">${rpHtml}${esc(msg.body).replace(/\n/g,'<br>')}<span class="msg-time">${msg.time||''}${tick}${pend}</span></div>`;
+    if (res.ok) {
+      for (const m of pending) await clearOutboxItem(m.client_id);
+      console.log(`✅ Synced ${pending.length} messages`);
+      loadMessages();  // Refresh
+    }
+  } catch(e) {
+    console.warn('Sync failed:', e);
   }
-  row.innerHTML=inner;
-  wrap.appendChild(row);
-  if(animate)scrollBot();
 }
 
-// ── Send ───────────────────────────────────────────────────────────────────
-async function doSend(){
-  const ta=document.getElementById('msgTA');
-  const body=ta.value.trim();
-  if(!body||!currentRoom)return;
-  ta.value='';autoResize(ta);stopTyping();
+// ── SWITCH ROOM ───────────────────────────────────────────────────────────────
+function switchRoom(room, el) {
+  currentRoom = room;
+  document.querySelectorAll('.chat-room').forEach(r => r.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('roomTitle').textContent = `💬 # ${room}`;
+  loadMessages();
+}
 
-  if(navigator.onLine){
-    socket.emit('send_message',{room:currentRoom,body,client_id:crypto.randomUUID(),reply_to_id:replyData?replyData.id:null});
-  }else{
-    const msg={client_id:crypto.randomUUID(),room:currentRoom,body,sender_id:ME_ID,sender_name:ME_NAME,created_at:new Date().toISOString(),msg_type:'text',file_url:null,file_name:null,file_size:null,reply_to:null,is_deleted:false,read_count:0,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
-    appendMsg(msg,true,true);
-    await idbSave(msg);
+// ── ONLINE/OFFLINE HANDLERS ───────────────────────────────────────────────────
+function updateOnlineStatus() {
+  isOnline = navigator.onLine;
+  const bar = document.getElementById('offlineBar');
+  const badge = document.getElementById('onlineStatus');
+  if (isOnline) {
+    bar.classList.remove('show');
+    badge.style.background = '#d1fae5';
+    badge.style.color = '#065f46';
+    badge.textContent = '🟢 Online';
+    syncOutbox();
+  } else {
+    bar.classList.add('show');
+    badge.style.background = '#fee2e2';
+    badge.style.color = '#7F1D1D';
+    badge.textContent = '🔴 Offline';
   }
-  cancelReply();
 }
 
-// ── Typing ─────────────────────────────────────────────────────────────────
-function handleTyping(){
-  if(!currentRoom)return;
-  if(!isTyping){isTyping=true;socket.emit('typing',{room:currentRoom,typing:true})}
-  clearTimeout(typingTimer);typingTimer=setTimeout(stopTyping,2000);
-}
-function stopTyping(){if(isTyping){isTyping=false;if(currentRoom)socket.emit('typing',{room:currentRoom,typing:false})}}
-function showTyping(){
-  const el=document.getElementById('typingBar');
-  const names=Object.values(typingUsers);
-  if(!names.length){el.innerHTML='';return}
-  const lbl=names.length===1?`${names[0]} is typing`:`${names.join(', ')} are typing`;
-  el.innerHTML=`${lbl}<span class="tdots"><span></span><span></span><span></span></span>`;
-}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
 
-// ── File upload ────────────────────────────────────────────────────────────
-async function uploadFile(input){
-  const file=input.files[0];if(!file||!currentRoom)return;
-  if(file.size>20*1024*1024){alert('Max file size is 20MB');return}
-  const toast=document.getElementById('upToast');
-  document.getElementById('upText').textContent='Uploading '+file.name+'…';
-  toast.classList.add('show');
-  const fd=new FormData();fd.append('file',file);fd.append('room_id',currentRoom);
-  if(replyData)fd.append('reply_to',replyData.id);
-  try{
-    const res=await fetch('/chat/upload',{method:'POST',body:fd});
-    const data=await res.json();
-    if(!res.ok)alert(data.error||'Upload failed');
-    else cancelReply();
-  }catch{alert('Upload failed. Please try again.')}
-  finally{toast.classList.remove('show');input.value=''}
-}
-
-// ── Reply ──────────────────────────────────────────────────────────────────
-function setReply(msg){
-  replyData=msg;
-  document.getElementById('rbName').textContent=msg.sender_name;
-  document.getElementById('rbText').textContent=(msg.body||'').substring(0,80);
-  document.getElementById('replyBar').classList.add('show');
-  document.getElementById('msgTA').focus();
-}
-function cancelReply(){replyData=null;document.getElementById('replyBar').classList.remove('show')}
-
-// ── Emoji ──────────────────────────────────────────────────────────────────
-const EMOJIS=['😀','😂','🥰','😍','🤩','😢','😭','😡','🥳','🎉','🙏','❤️','🔥','👍','👎','✅','❌','🎵','📚','⚽','🌟','💯','🤝','✝️','🙌','👏','💪','🌹','🕊️','📖','😊','🤔','😅','😎','🤗','🙃','✊','🫶','💙','💚','🧡','💜','🌈','⭐','🎁','☕','🌸','🦋','🍎','🏠','📱','💻','🎶','🙋','👋','🤲','🫁','💝','🎯','🗣️'];
-function buildEmoji(){
-  const p=document.getElementById('epicker');
-  EMOJIS.forEach(e=>{const s=document.createElement('span');s.textContent=e;s.onclick=ev=>{ev.stopPropagation();document.getElementById('msgTA').value+=e;document.getElementById('msgTA').focus();p.classList.remove('show')};p.appendChild(s)});
-}
-function toggleEmoji(e){e.stopPropagation();document.getElementById('epicker').classList.toggle('show')}
-
-// ── Context menu ───────────────────────────────────────────────────────────
-function showCtx(e,msg){
-  ctxMsg=msg;
-  const m=document.getElementById('ctx');
-  m.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
-  m.style.top=Math.min(e.clientY,window.innerHeight-150)+'px';
-  m.classList.add('show');
-}
-function doReply(){if(ctxMsg)setReply(ctxMsg);document.getElementById('ctx').classList.remove('show')}
-function doCopy(){if(ctxMsg)navigator.clipboard.writeText(ctxMsg.body).catch(()=>{});document.getElementById('ctx').classList.remove('show')}
-function doReact(){
-  document.getElementById('ctx').classList.remove('show');
-  if(!ctxMsg)return;
-  const e=prompt('Enter emoji:');
-  if(e&&currentRoom)socket.emit('react',{room:currentRoom,msg_id:ctxMsg.id,emoji:e});
-}
-async function doDelete(){
-  document.getElementById('ctx').classList.remove('show');
-  if(!ctxMsg)return;
-  if(!confirm('Delete this message?'))return;
-  await fetch('/chat/message/'+ctxMsg.id+'/delete',{method:'POST'});
-}
-function addRxn(msgId,emoji,name){
-  let row=document.getElementById('rxn-'+msgId);
-  if(!row){const el=document.getElementById('msg-'+msgId);if(!el)return;row=document.createElement('div');row.id='rxn-'+msgId;row.className='rxn-row';el.appendChild(row)}
-  const p=document.createElement('span');p.className='rxn-pill';p.title=name;p.textContent=emoji;row.appendChild(p);
-}
-
-// ── New DM ─────────────────────────────────────────────────────────────────
-function showDMModal(){document.getElementById('dmModal').classList.add('show');renderMembers(allMembers)}
-function closeDMModal(){document.getElementById('dmModal').classList.remove('show')}
-function renderMembers(list){
-  document.getElementById('dmList').innerHTML=list.map(m=>`
-    <div class="dm-item" onclick="startDM(${m.id},'${escJ(m.name)}')">
-      <div class="dm-av">${m.avatar}${m.online?'<div class="online-dot"></div>':''}</div>
-      <div><div class="dm-name">${esc(m.name)}</div><div class="dm-role">${m.role}</div></div>
-    </div>`).join('');
-}
-function filterMembers(q){renderMembers(allMembers.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())))}
-function startDM(uid,name){
-  closeDMModal();
-  const rid='dm_'+Math.min(ME_ID,uid)+'_'+Math.max(ME_ID,uid);
-  if(!allChats.find(c=>c.room_id===rid)){allChats.unshift({room_id:rid,name,type:'dm',user_id:uid,last_msg:'',last_time:'',unread:0});renderChats(allChats)}
-  openRoom(rid,name,'dm',uid);
-}
-function loadMembers(){fetch('/chat/members').then(r=>r.json()).then(d=>allMembers=d).catch(()=>{})}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function filterChats(q){renderChats(allChats.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())))}
-function switchTab(tab,el){document.querySelectorAll('.cl-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');if(tab==='all')renderChats(allChats);else if(tab==='groups')renderChats(allChats.filter(c=>c.type==='group'));else renderChats(allChats.filter(c=>c.type==='dm'))}
-function updatePreview(msg){
-  const pr=document.getElementById('prev-'+msg.room);const tm=document.getElementById('time-'+msg.room);
-  if(pr)pr.textContent=msg.body.substring(0,50);if(tm)tm.textContent=msg.time;
-  if(msg.sender_id!==ME_ID&&msg.room!==currentRoom){const b=document.getElementById('badge-'+msg.room);if(b){b.style.display='flex';b.textContent=parseInt(b.textContent||0)+1}}
-}
-function setStatus(txt,online){const el=document.getElementById('crStatus');el.textContent=txt;el.style.color=online?'#00a884':'#8696a0'}
-function refreshDots(){allChats.filter(c=>c.type==='dm').forEach(c=>{const av=document.querySelector(`#ci-${c.room_id} .cl-avatar`);if(!av)return;let dot=av.querySelector('.online-dot');if(onlineUsers.has(parseInt(c.user_id||0))){if(!dot){dot=document.createElement('div');dot.className='online-dot';av.appendChild(dot)}}else if(dot)dot.remove()})}
-function scrollBot(instant=false){const w=document.getElementById('crMsgs');if(instant)w.scrollTop=w.scrollHeight;else setTimeout(()=>w.scrollTop=w.scrollHeight,40)}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px'}
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function escJ(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
-function fmtSz(b){if(!b)return'';if(b<1024)return b+'B';if(b<1024*1024)return(b/1024).toFixed(1)+'KB';return(b/(1024*1024)).toFixed(1)+'MB'}
-function openImg(src){document.getElementById('imgSrc').src=src;document.getElementById('imgModal').classList.add('show')}
-function closeImgModal(){document.getElementById('imgModal').classList.remove('show')}
-function closeChat(){document.getElementById('chatRight').classList.remove('active')}
-function ping(){try{const c=new(window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator();const g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=0.07;o.start();o.stop(c.currentTime+0.1)}catch{}}
-function updateConnBadge(){
-  const b=document.getElementById('onlineBadge');
-  const ob=document.getElementById('offlineBar');
-  if(navigator.onLine){b.style.background='#d1fae5';b.style.color='#065f46';b.textContent='🟢 Online';ob.classList.remove('show')}
-  else{b.style.background='#fee2e2';b.style.color='#7F1D1D';b.textContent='🔴 Offline';ob.classList.add('show')}
-}
-async function onOnline(){updateConnBadge();const pending=await idbAll();if(!pending.length)return;try{const res=await fetch('/api/chat/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:pending})});if(res.ok){for(const m of pending)await idbDel(m.client_id);if(currentRoom)loadMsgs(currentRoom)}}catch{}}
-function onOffline(){updateConnBadge()}
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  db = await openDB();
+  updateOnlineStatus();
+  await loadMessages();
+  // Auto-refresh every 15 seconds when online
+  setInterval(() => { if (isOnline) loadMessages(); }, 15000);
+})();
 </script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+</body></html>

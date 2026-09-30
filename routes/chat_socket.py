@@ -1,13 +1,16 @@
 """
 WebSocket Events - Real-time chat using Flask-SocketIO
+Handles: join room, send message, typing, read receipts, online status
 """
 from flask import request
 from flask_login import current_user
 from flask_socketio import join_room, leave_room, emit
 from extensions import db
 from models.chat_message import ChatMessage, MessageRead
+from models.user import User
 from datetime import datetime
 
+# Track online users: {user_id: socket_id}
 online_users = {}
 
 def register_socket_events(socketio):
@@ -16,8 +19,10 @@ def register_socket_events(socketio):
     def on_connect():
         if current_user.is_authenticated:
             online_users[current_user.id] = request.sid
+            # Update last seen
             current_user.last_seen = datetime.utcnow()
             db.session.commit()
+            # Tell everyone this user is online
             emit("user_online", {
                 "user_id": current_user.id,
                 "name": current_user.full_name
@@ -38,7 +43,10 @@ def register_socket_events(socketio):
         room = data.get("room")
         if room:
             join_room(room)
-            emit("online_users", {"users": list(online_users.keys())})
+            # Send online users list to newly joined
+            emit("online_users", {
+                "users": list(online_users.keys())
+            })
 
     @socketio.on("leave")
     def on_leave(data):
@@ -58,10 +66,13 @@ def register_socket_events(socketio):
         if not body:
             return
 
+        # Dedup
         if client_id and ChatMessage.query.filter_by(client_id=client_id).first():
             return
 
-        reply_to = ChatMessage.query.get(reply_to_id) if reply_to_id else None
+        reply_to = None
+        if reply_to_id:
+            reply_to = ChatMessage.query.get(reply_to_id)
 
         msg = ChatMessage(
             room=room,
@@ -101,25 +112,23 @@ def register_socket_events(socketio):
     def on_typing(data):
         if not current_user.is_authenticated:
             return
+        room = data.get("room")
+        is_typing = data.get("typing", False)
         emit("typing", {
             "user_id": current_user.id,
             "name": current_user.full_name,
-            "typing": data.get("typing", False),
-        }, room=data.get("room"), include_self=False)
+            "typing": is_typing,
+        }, room=room, include_self=False)
 
     @socketio.on("mark_read")
     def on_mark_read(data):
         if not current_user.is_authenticated:
             return
-        msg_id = data.get("msg_id")
         room = data.get("room")
+        msg_id = data.get("msg_id")
         if msg_id:
-            if not MessageRead.query.filter_by(
-                message_id=msg_id, user_id=current_user.id
-            ).first():
-                db.session.add(MessageRead(
-                    message_id=msg_id, user_id=current_user.id
-                ))
+            if not MessageRead.query.filter_by(message_id=msg_id, user_id=current_user.id).first():
+                db.session.add(MessageRead(message_id=msg_id, user_id=current_user.id))
                 db.session.commit()
             emit("message_read", {
                 "msg_id": msg_id,

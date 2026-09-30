@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="LU NETWORK Evangelistic Team - Reaching the campus, transforming the regions.">
+<title>LU NETWORK Evangelistic Team | Every Student for Christ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body>
+<header class="site-header" id="top">
+  <a class="brand" href="#top" aria-label="LU NETWORK Evangelistic Team home">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="LU NETWORK Evangelistic Team logo">
+    <span><strong>LU NETWORK</strong><small>EVANGELISTIC TEAM</small></span>
+  </a>
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">Menu</button>
+  <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+    <a href="#about">Who we are</a>
+    <a href="#mission">Our mission</a>
+    <a href="#rhythm">Our rhythm</a>
+    <a class="nav-login" href="{{ url_for('auth.login') }}">Member login <span aria-hidden="true">&rarr;</span></a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-image" aria-hidden="true"></div>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="hero-content page-width">
+      <p class="eyebrow light">Laikipia University Christian Union</p>
+      <h1 id="hero-title">Reaching the campus.<br><em>Transforming the regions.</em></h1>
+      <p class="hero-copy">A family of students and young believers growing in Christ, serving one another, and carrying the good news beyond the university gates.</p>
+      <div class="hero-actions">
+        <a class="button button-gold" href="{{ url_for('auth.register') }}">Join the family <span aria-hidden="true">&rarr;</span></a>
+        <a class="text-link light-link" href="#about">Discover NETWORK <span aria-hidden="true">&#8595;</span></a>
+      </div>
+      <div class="hero-note"><span class="note-line"></span><span>Every student for Christ</span></div>
+    </div>
+    <div class="hero-scroll" aria-hidden="true">Scroll to explore <span>&darr;</span></div>
+  </section>
+
+  <section class="intro section-pad" id="about">
+    <div class="page-width intro-grid" data-reveal>
+      <div>
+        <p class="eyebrow">A faith family on campus</p>
+        <h2>Belong deeply.<br><em>Live sent.</em></h2>
+      </div>
+      <div class="intro-copy">
+        <p class="lead">Welcome to NETWORK, an evangelistic team within LUCU made up of brethren from Nairobi, Central, and every corner of the university community.</p>
+        <p>We are non-denominational, non-political, and non-profit. Together, we make space for honest questions, faithful friendship, practical service, and a life shaped by the Word of God.</p>
+        <a class="text-link dark-link" href="#mission">See what guides us <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="mission section-pad" id="mission">
+    <div class="page-width">
+      <div class="section-heading" data-reveal>
+        <div>
+          <p class="eyebrow">What moves us</p>
+          <h2>Faith that becomes<br><em>visible.</em></h2>
+        </div>
+        <p class="section-aside">We are learning to follow Jesus together: in our lecture halls, our homes, our churches, and the places we are sent.</p>
+      </div>
+      <div class="pillar-grid" data-reveal>
+        <article class="pillar pillar-featured">
+          <span class="pillar-number">01</span>
+          <div class="pillar-mark">+</div>
+          <h3>Missions &amp;<br>evangelism</h3>
+          <p>We take the gospel beyond our familiar circles through outreach, regional missions, crusades, and compassionate community service.</p>
+          <a href="#rhythm" aria-label="Learn about missions and evangelism">Explore <span aria-hidden="true">&rarr;</span></a>
+        </article>
+        <article class="pillar">
+          <span class="pillar-number">02</span>
+          <div class="pillar-mark">~</div>
+          <h3>Discipleship &amp;<br>mentorship</h3>
+          <p>We nurture steady, rooted faith through Bible study, prayer, small groups, and relationships that make room to grow.</p>
+          <a href="#rhythm" aria-label="Learn about discipleship and mentorship">Explore <span aria-hidden="true">&rarr;</span></a>
+        </article>
+        <article class="pillar">
+          <span class="pillar-number">03</span>
+          <div class="pillar-mark">*</div>
+          <h3>Leadership<br>development</h3>
+          <p>We raise servant leaders by giving students meaningful responsibility, patient coaching, and opportunities to use their gifts.</p>
+          <a href="#rhythm" aria-label="Learn about leadership development">Explore <span aria-hidden="true">&rarr;</span></a>
+        </article>
+        <article class="pillar">
+          <span class="pillar-number">04</span>
+          <div class="pillar-mark">o</div>
+          <h3>Church<br>fellowship</h3>
+          <p>We champion active participation in LUCU and the wider church, building bridges between campus faith and local community.</p>
+          <a href="#rhythm" aria-label="Learn about church fellowship">Explore <span aria-hidden="true">&rarr;</span></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="quote-section">
+    <div class="page-width quote-grid" data-reveal>
+      <div class="quote-label"><span class="quote-symbol">&ldquo;</span><span>Our posture</span></div>
+      <blockquote>We do not gather just to be encouraged. We gather to be equipped, then sent.</blockquote>
+      <p class="quote-credit">The NETWORK way of life</p>
+    </div>
+  </section>
+
+  <section class="rhythm section-pad" id="rhythm">
+    <div class="page-width">
+      <div class="section-heading rhythm-heading">
+        <div>
+          <p class="eyebrow">A rhythm for the journey</p>
+          <h2>There is a place<br><em>for you here.</em></h2>
+        </div>
+        <p class="section-aside">Come as you are, then find your next faithful step. Our shared rhythm keeps the family connected and the mission moving.</p>
+      </div>
+      <div class="rhythm-list" data-reveal>
+        <div class="rhythm-item"><span class="rhythm-icon">01</span><div><p class="rhythm-tag">Every week</p><h3>Word, prayer &amp; fellowship</h3><p>Come ready for a refreshing evening of Scripture, prayer, worship, and real conversation with fellow students.</p></div><span class="rhythm-arrow" aria-hidden="true">&rarr;</span></div>
+        <div class="rhythm-item"><span class="rhythm-icon">02</span><div><p class="rhythm-tag">Every semester</p><h3>Regional missions</h3><p>Step outside campus with a team for outreach, service, and the joy of meeting communities where they are.</p></div><span class="rhythm-arrow" aria-hidden="true">&rarr;</span></div>
+        <div class="rhythm-item"><span class="rhythm-icon">03</span><div><p class="rhythm-tag">All year round</p><h3>Grow and serve</h3><p>Find a ministry team, take responsibility, and discover how God can use your story, skills, and compassion.</p></div><span class="rhythm-arrow" aria-hidden="true">&rarr;</span></div>
+      </div>
+      <div class="rhythm-cta" data-reveal><div><p class="eyebrow">Ready to take part?</p><h3>Start with a simple hello.</h3></div><a class="button button-red" href="{{ url_for('auth.register') }}">Create your account <span aria-hidden="true">&rarr;</span></a></div>
+    </div>
+  </section>
+
+  <section class="platform-banner">
+    <div class="page-width platform-grid" data-reveal>
+      <div><p class="eyebrow light">The NETWORK platform</p><h2>One home for<br><em>the whole family.</em></h2></div>
+      <div class="platform-copy"><p>Stay connected to announcements, attendance, meeting minutes, resources, and conversations that help us serve with clarity.</p><a class="button button-outline" href="{{ url_for('auth.login') }}">Enter the platform <span aria-hidden="true">&rarr;</span></a></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="page-width footer-main" data-reveal>
+    <div class="footer-brand"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="LU NETWORK Evangelistic Team logo"><div><strong>LU NETWORK</strong><p>Evangelistic Team<br>Reaching the campus.</p></div></div>
+    <div class="footer-details"><p class="footer-label">Find us</p><p>Laikipia University Main Campus<br>Along the Nakuru-Nyahururu Highway<br>Nyahururu, Kenya</p></div>
+    <div class="footer-details"><p class="footer-label">A ministry of</p><p>Laikipia University Christian Union<br>Under the Chaplaincy &amp; Student Affairs</p></div>
+  </div>
+  <div class="page-width footer-bottom"><span>&copy; {{ 2026 }} LU NETWORK Evangelistic Team</span><span>Every student for Christ</span><a href="#top">Back to top &uarr;</a></div>
+</footer>
+<script>
+const menuButton = document.querySelector('.menu-toggle');
+const navigation = document.querySelector('.site-nav');
+menuButton.addEventListener('click', () => {
+  const open = navigation.classList.toggle('is-open');
+  menuButton.setAttribute('aria-expanded', open);
+});
+navigation.querySelectorAll('a').forEach(link => link.addEventListener('click', () => navigation.classList.remove('is-open')));
+
+const revealItems = document.querySelectorAll('[data-reveal]');
+if ('IntersectionObserver' in window) {
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.14 });
+  revealItems.forEach(item => revealObserver.observe(item));
+} else {
+  revealItems.forEach(item => item.classList.add('is-visible'));
+}
+</script>
+</body>
+</html>

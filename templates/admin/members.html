@@ -2,94 +2,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Members — NET Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<style>
+.member-avatar{width:38px;height:38px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+.role-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.role-admin{background:#fef3c7;color:#92400e}
+.role-vs{background:#dbeafe;color:#1e40af}
+.role-member{background:#d1fae5;color:#065f46}
+.badge-verified{font-size:11px;color:#065f46;margin-left:4px}
+.badge-unverified{font-size:11px;color:#92400e;margin-left:4px}
+.status-active{color:#065f46;font-weight:600;font-size:12px}
+.status-inactive{color:#7F1D1D;font-weight:600;font-size:12px}
+.action-btns{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.btn-danger{background:#fee2e2;color:#7F1D1D;border:1px solid #fca5a5}
+.btn-danger:hover{background:#7F1D1D;color:#fff}
+.search-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.search-bar input{flex:1;min-width:200px}
+.stats-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.stat-mini{background:#fff;border:1px solid var(--grey-200);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center}
+.stat-mini .num{font-size:22px;font-weight:700;color:var(--red)}
+.stat-mini .lbl{font-size:12px;color:var(--grey-400);margin-top:2px}
+@media(max-width:768px){
+  .data-table thead{display:none}
+  .data-table tr{display:block;border:1px solid var(--grey-200);border-radius:10px;margin-bottom:12px;padding:12px}
+  .data-table td{display:flex;justify-content:space-between;padding:5px 0;border:none;font-size:13px}
+  .data-table td::before{content:attr(data-label);font-weight:600;color:var(--grey-500);flex-shrink:0;margin-right:8px}
+  .action-btns{justify-content:flex-end}
+}
+</style>
 </head>
 <body>
 <div class="app-shell">
-{{ sidebar('members', 'admin', current_user) }}
+  {{ sidebar('members', 'admin', current_user) }}
   <div class="main-content">
     <div class="topbar">
       <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-      <div class="topbar-title">Member Management</div>
+      <div class="topbar-title">👥 Member Management</div>
       <div class="topbar-actions">
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">➕ Add Member</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">+ Add Member</a>
       </div>
     </div>
+
     <div class="content-body">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
       {% endwith %}
 
-      <!-- Search Bar -->
-      <div class="card" style="margin-bottom:18px">
-        <div class="card-body" style="padding:14px 22px;display:flex;gap:12px;align-items:center">
-          <input type="text" id="memberSearch" class="form-control" style="max-width:320px;margin:0" placeholder="🔍 Search members...">
-          <span style="font-size:13px;color:var(--grey-400)">{{ members|length }} total members</span>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-mini">
+          <div class="num">{{ members|length }}</div>
+          <div class="lbl">Total Members</div>
+        </div>
+        <div class="stat-mini">
+          <div class="num" style="color:#065f46">{{ members|selectattr('is_active')|list|length }}</div>
+          <div class="lbl">Active</div>
+        </div>
+        <div class="stat-mini">
+          <div class="num" style="color:#92400e">{{ members|rejectattr('is_active')|list|length }}</div>
+          <div class="lbl">Inactive</div>
+        </div>
+        <div class="stat-mini">
+          <div class="num" style="color:#1e40af">{{ members|selectattr('role','eq','vice_secretary')|list|length }}</div>
+          <div class="lbl">Vice Secretaries</div>
         </div>
       </div>
 
+      <!-- Search -->
+      <div class="search-bar">
+        <input type="text" class="form-control" placeholder="🔍 Search by name, email, role, residence..."
+          oninput="filterTable(this.value)" style="margin:0">
+        <select class="form-control" style="width:auto;margin:0" onchange="filterByRole(this.value)">
+          <option value="">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="vice_secretary">Vice Secretary</option>
+          <option value="member">Member</option>
+        </select>
+      </div>
+
+      <!-- Members Table -->
       <div class="card">
-        <div class="card-header"><h3>👥 All Members</h3></div>
         <div class="table-wrap">
           <table class="data-table" id="membersTable">
             <thead>
               <tr>
-                <th>#</th><th>Full Name</th><th>Email</th><th>Phone</th>
-                <th>Role</th><th>Branch</th><th>Status</th><th>Joined</th><th>Actions</th>
+                <th>#</th>
+                <th>Member</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Residence</th>
+                <th>Year</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for m in members %}
-              <tr>
-                <td style="color:var(--grey-400)">{{ loop.index }}</td>
-                <td><strong>{{ m.full_name }}</strong></td>
-                <td>{{ m.email }}</td>
-                <td>{{ m.phone or '—' }}</td>
-                <td><span class="pill pill-blue">{{ m.role.replace('_',' ') }}</span></td>
-                <td>{{ m.branch.name if m.branch else '—' }}</td>
-                <td>
-                  <span class="pill {% if m.is_active %}pill-green{% else %}pill-red{% endif %}">
-                    {{ 'Active' if m.is_active else 'Inactive' }}
+              <tr class="member-row" data-name="{{ m.full_name|lower }}" data-email="{{ m.email|lower }}" data-role="{{ m.role }}" data-residence="{{ (m.residence or '')|lower }}">
+                <td data-label="#">{{ loop.index }}</td>
+                <td data-label="Member">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="member-avatar">{{ m.full_name[0].upper() }}</div>
+                    <div>
+                      <div style="font-weight:600;font-size:14px">{{ m.full_name }}</div>
+                      <div style="font-size:11px;color:var(--grey-400)">ID: {{ m.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="Email" style="font-size:13px">
+                  {{ m.email }}
+                  {% if m.email_verified %}
+                    <span class="badge-verified" title="Email verified">✓</span>
+                  {% else %}
+                    <span class="badge-unverified" title="Email not verified">✗ unverified</span>
+                  {% endif %}
+                </td>
+                <td data-label="Phone" style="font-size:13px">{{ m.phone or '—' }}</td>
+                <td data-label="Residence" style="font-size:13px">{{ m.residence or '—' }}</td>
+                <td data-label="Year" style="font-size:13px">{{ m.year or '—' }}</td>
+                <td data-label="Role">
+                  <span class="role-badge role-{{ m.role }}">
+                    {% if m.role == 'admin' %}🔴 Admin
+                    {% elif m.role == 'vice_secretary' %}🔵 Vice Sec
+                    {% else %}🟢 Member{% endif %}
                   </span>
                 </td>
-                <td style="font-size:12px;color:var(--grey-400)">{{ m.joined_date.strftime('%d %b %Y') }}</td>
-                <td>
-                  <div style="display:flex;gap:6px">
-                    <form method="POST" action="{{ url_for('admin.toggle_member', uid=m.id) }}" style="display:inline">
-                      <button class="btn btn-sm {% if m.is_active %}btn-grey{% else %}btn-success{% endif %}">
-                        {{ '⏸ Deactivate' if m.is_active else '▶ Activate' }}
+                <td data-label="Status">
+                  <span class="{{ 'status-active' if m.is_active else 'status-inactive' }}">
+                    {{ '✅ Active' if m.is_active else '⛔ Inactive' }}
+                  </span>
+                </td>
+                <td data-label="Joined" style="font-size:12px;color:var(--grey-400)">
+                  {{ m.joined_date.strftime('%d %b %Y') if m.joined_date else '—' }}
+                </td>
+                <td data-label="Actions">
+                  <div class="action-btns">
+                    <!-- Edit -->
+                    <a href="{{ url_for('admin.edit_member', uid=m.id) }}"
+                       class="btn btn-sm btn-outline">✏️ Edit</a>
+
+                    <!-- Activate / Deactivate -->
+                    <form method="POST" action="{{ url_for('admin.toggle_member', uid=m.id) }}"
+                          style="display:inline">
+                      <button class="btn btn-sm btn-grey" type="submit"
+                        title="{{ 'Deactivate' if m.is_active else 'Activate' }}">
+                        {{ '⏸' if m.is_active else '▶️' }}
                       </button>
                     </form>
-                    {% if m.id != current_user.id %}
-                    <form method="POST" action="{{ url_for('admin.delete_member', uid=m.id) }}" style="display:inline"
-                          onsubmit="return confirm('Delete {{ m.full_name }}? This cannot be undone.')">
-                      <button class="btn btn-sm btn-danger">🗑 Delete</button>
+
+                    <!-- Delete -->
+                    {% if not m.email_verified %}
+                    <form method="POST" action="{{ url_for('admin.verify_member', uid=m.id) }}" style="display:inline">
+                      <button type="submit" class="btn btn-sm btn-grey" title="Mark email as verified">✓ Verify</button>
                     </form>
+                    {% endif %}
+                    {% if m.role != 'admin' %}
+                    <form method="POST" action="{{ url_for('admin.delete_member', uid=m.id) }}"
+                          style="display:inline"
+                          onsubmit="return confirmDelete('{{ m.full_name }}')">
+                      <button class="btn btn-sm btn-danger" type="submit" title="Delete permanently">
+                        🗑
+                      </button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-sm btn-grey" disabled title="Cannot delete admin" style="opacity:.4">🗑</button>
                     {% endif %}
                   </div>
                 </td>
               </tr>
               {% else %}
-              <tr><td colspan="9" class="empty-state">No members registered yet. <a href="{{ url_for('auth.register') }}">Add one</a>.</td></tr>
+              <tr>
+                <td colspan="10" class="empty-state">
+                  No members yet.
+                  <a href="{{ url_for('auth.register') }}">Add the first member</a>
+                </td>
+              </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
+
+      <div style="font-size:12px;color:var(--grey-400);margin-top:8px;text-align:right">
+        Showing <span id="visibleCount">{{ members|length }}</span> of {{ members|length }} members
+      </div>
     </div>
   </div>
 </div>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 <script>
-// Live search filter
-document.getElementById('memberSearch').addEventListener('input', function() {
-  const q = this.value.toLowerCase();
-  document.querySelectorAll('#membersTable tbody tr').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+function confirmDelete(name) {
+  return confirm(
+    '⚠️ PERMANENTLY DELETE "' + name + '"?\n\n' +
+    'This will also delete:\n' +
+    '• All their attendance records\n' +
+    '• All their chat messages\n\n' +
+    'This CANNOT be undone. Are you sure?'
+  );
+}
+
+function filterTable(q) {
+  q = q.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('.member-row').forEach(row => {
+    const name = row.dataset.name || '';
+    const email = row.dataset.email || '';
+    const residence = row.dataset.residence || '';
+    const role = row.dataset.role || '';
+    const match = name.includes(q) || email.includes(q) || residence.includes(q) || role.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
   });
-});
+  document.getElementById('visibleCount').textContent = visible;
+}
+
+function filterByRole(role) {
+  let visible = 0;
+  document.querySelectorAll('.member-row').forEach(row => {
+    const match = !role || row.dataset.role === role;
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  document.getElementById('visibleCount').textContent = visible;
+}
 </script>
-</body></html>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

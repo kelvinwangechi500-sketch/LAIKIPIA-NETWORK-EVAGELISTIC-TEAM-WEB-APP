@@ -9,7 +9,7 @@ def _fix_db_url(url):
     return url
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "NET-EVT-dev-secret-CHANGE-IN-PRODUCTION")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "NET-EVT-dev-secret")
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
@@ -28,6 +28,15 @@ class Config:
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
     GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY", "")
     ASSEMBLYAI_API_KEY = os.environ.get("ASSEMBLYAI_API_KEY", "")
+
+
+    # Email / SMTP (optional — falls back to console in development)
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() in ("1", "true", "yes")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "")
 
 class ProductionConfig(Config):
     DEBUG = False

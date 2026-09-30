@@ -2,25 +2,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Attendance — NET Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<style>
-  .search-input { margin-right: 10px; width: 200px; }
-</style>
 </head>
 <body>
 <div class="app-shell">
-  {{ sidebar('announcements', 'admin', current_user) }}
+  {{ sidebar('attendance', 'admin', current_user) }}
   <div class="main-content">
     <div class="topbar">
       <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-      <div class="topbar-title">Attendance Analytics</div>
-      <div class="topbar-actions">
-        <input type="date" id="dateFilter" class="form-control" style="width:auto;margin:0" onchange="filterByDate(this.value)">
-        <input type="text" id="searchInput" class="form-control search-input" placeholder="Search by name, phone, residence, year..." onkeyup="filterBySearch(this.value)">
+      <div class="topbar-title">📋 Attendance Register</div>
+      <div class="topbar-actions" style="display:flex;gap:8px">
+        <a href="{{ url_for('admin.export_attendance', fmt='csv', date=date_filter) }}" class="btn btn-sm btn-outline">⬇ CSV</a>
+        <a href="{{ url_for('admin.export_attendance', fmt='excel', date=date_filter) }}" class="btn btn-sm btn-outline">⬇ Excel</a>
       </div>
     </div>
     <div class="content-body">
@@ -28,50 +24,121 @@
         {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
       {% endwith %}
 
-      <div class="card">
-        <div class="card-header">
-          <h3>📋 Attendance Records</h3>
-          <span style="font-size:13px;color:var(--grey-400)">{{ records|length }} records</span>
+      <!-- Date Filter Card -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--grey-200);background:var(--grey-100)">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600;color:var(--grey-600)">📅 Select Meeting Date:</span>
+            <form method="GET" style="display:flex;gap:8px;align-items:center">
+              <input type="date" name="date" value="{{ date_filter }}"
+                class="form-control" style="width:auto;margin:0"
+                onchange="this.form.submit()">
+              <button type="submit" class="btn btn-grey btn-sm">Filter</button>
+              {% if date_filter %}
+              <a href="{{ url_for('admin.attendance') }}" class="btn btn-sm btn-outline">✕ Clear</a>
+              {% endif %}
+            </form>
+          </div>
+
+          <!-- Quick date buttons -->
+          {% if dates %}
+          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+            <span style="font-size:12px;color:var(--grey-400);padding-top:4px">All meetings:</span>
+            {% for d in dates %}
+            <a href="{{ url_for('admin.attendance', date=d) }}"
+               class="btn btn-sm {% if date_filter == d|string %}btn-primary{% else %}btn-grey{% endif %}"
+               style="font-size:11px;padding:4px 10px">
+              {{ d.strftime('%d %b %Y') }}
+            </a>
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
+
+        {% if date_filter and records %}
+        <!-- Stats for selected date -->
+        {% set present = records | selectattr('status','eq','present') | list | length %}
+        {% set absent = records | selectattr('status','eq','absent') | list | length %}
+        {% set total = records | length %}
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--grey-200)">
+          <div style="flex:1;padding:16px;text-align:center;border-right:1px solid var(--grey-200)">
+            <div style="font-size:22px;font-weight:700;color:var(--grey-700)">{{ total }}</div>
+            <div style="font-size:12px;color:var(--grey-400)">Total</div>
+          </div>
+          <div style="flex:1;padding:16px;text-align:center;border-right:1px solid var(--grey-200)">
+            <div style="font-size:22px;font-weight:700;color:#065f46">{{ present }}</div>
+            <div style="font-size:12px;color:var(--grey-400)">✅ Present</div>
+          </div>
+          <div style="flex:1;padding:16px;text-align:center;border-right:1px solid var(--grey-200)">
+            <div style="font-size:22px;font-weight:700;color:#7F1D1D">{{ absent }}</div>
+            <div style="font-size:12px;color:var(--grey-400)">❌ Absent</div>
+          </div>
+          <div style="flex:1;padding:16px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:var(--red)">
+              {{ ((present / total * 100) | round(0) | int) if total else 0 }}%
+            </div>
+            <div style="font-size:12px;color:var(--grey-400)">Rate</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Records Table -->
         <div class="table-wrap">
           <table class="data-table" id="attTable">
             <thead>
               <tr>
-                <th>Member</th>
-                <th>Phone</th>
+                <th>#</th>
+                <th>Member Name</th>
                 <th>Residence</th>
                 <th>Year</th>
                 <th>Date</th>
                 <th>Status</th>
                 <th>Source</th>
-                <th>Recorded By</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for r in records %}
-              <tr data-date="{{ r.meeting_date }}">
+              <tr>
+                <td style="color:var(--grey-400)">{{ loop.index }}</td>
                 <td><strong>{{ r.user.full_name }}</strong></td>
-                <td>{{ r.user.phone or '-' }}</td>
-                <td>{{ r.user.residence or '-' }}</td>
-                <td>{{ r.user.year or '-' }}</td>
-                <td>{{ r.meeting_date.strftime('%d %B %Y') }}</td>
+                <td style="font-size:12px;color:var(--grey-400)">{{ r.user.residence or '—' }}</td>
+                <td style="font-size:12px;color:var(--grey-400)">{{ r.user.year or '—' }}</td>
                 <td>
-                  <span class="pill
-                    {% if r.status == 'present' %}pill-green
-                    {% elif r.status == 'absent' %}pill-red
-                    {% else %}pill-yellow{% endif %}">
+                  <a href="{{ url_for('admin.attendance', date=r.meeting_date) }}"
+                     style="font-size:12px;color:var(--red);text-decoration:none;font-weight:600">
+                    {{ r.meeting_date.strftime('%d %b %Y') }}
+                  </a>
+                </td>
+                <td>
+                  <span class="pill {% if r.status=='present' %}pill-green{% elif r.status=='absent' %}pill-red{% else %}pill-yellow{% endif %}">
+                    {% if r.status=='present' %}✅{% elif r.status=='absent' %}❌{% else %}⚠️{% endif %}
                     {{ r.status }}
                   </span>
                 </td>
-                <td><span class="pill pill-grey">{{ r.source }}</span></td>
-                <td style="font-size:12px;color:var(--grey-400)">
-                  {% if r.recorded_by %}
-                    {{ r.recorder.full_name if r.recorder else 'System' }}
-                  {% else %}System{% endif %}
+                <td><span class="pill pill-grey" style="font-size:11px">{{ r.source }}</span></td>
+                <td>
+                  <div style="display:flex;gap:5px">
+                    <button class="btn btn-sm btn-outline"
+                      onclick="openEdit({{ r.id }},'{{ r.status }}','{{ r.notes or '' }}')">✏️</button>
+                    <form method="POST" action="{{ url_for('admin.delete_attendance', rid=r.id) }}"
+                      onsubmit="return confirm('Delete this record?')" style="display:inline">
+                      <button class="btn btn-sm btn-danger">🗑</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
               {% else %}
-              <tr><td colspan="8" class="empty-state">No attendance records found.</td></tr>
+              <tr>
+                <td colspan="8" class="empty-state">
+                  {% if date_filter %}
+                    No records for this date.
+                  {% else %}
+                    No attendance records yet. Select a date above or
+                    <a href="{{ url_for('vs.upload_attendance') }}">upload attendance</a>.
+                  {% endif %}
+                </td>
+              </tr>
               {% endfor %}
             </tbody>
           </table>
@@ -81,25 +148,39 @@
   </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script>
-function filterByDate(val) {
-  document.querySelectorAll('#attTable tbody tr[data-date]').forEach(row => {
-    row.style.display = !val || row.dataset.date === val ? '' : 'none';
-  });
-}
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Edit Attendance</h3>
+      <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('open')">✕</button>
+    </div>
+    <form method="POST" id="editForm">
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" id="editStatus" class="form-control">
+          <option value="present">✅ Present</option>
+          <option value="absent">❌ Absent</option>
+          <option value="excused">⚠️ Excused</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <input name="notes" id="editNotes" class="form-control" placeholder="Optional notes">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">💾 Save Changes</button>
+    </form>
+  </div>
+</div>
 
-function filterBySearch(query) {
-  const q = query.toLowerCase();
-  document.querySelectorAll('#attTable tbody tr').forEach(row => {
-    const cells = row.querySelectorAll('td');
-    let found = false;
-    cells.forEach(cell => {
-      if(cell.textContent.toLowerCase().includes(q)) found = true;
-    });
-    row.style.display = found ? '' : 'none';
-  });
+<script>
+function openEdit(id, status, notes) {
+  document.getElementById('editForm').action = `/admin/attendance/${id}/edit`;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editNotes').value = notes;
+  document.getElementById('editModal').classList.add('open');
 }
 </script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

@@ -1,14 +1,11 @@
-{%- macro sidebar(active_page, role, user=none) %}
+{% macro sidebar(active_page, role, user=none) %}
 <div class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAABgcDBAgFAAH/xAA6EAACAQMDAgMEBggHAAAAAAABAgMEBREGEiEAMQcTIhQWQVEjMkJSYdIIFSRicYKVoTU2VnKBkrH/xAAaAQACAwEBAAAAAAAAAAAAAAAEBQECAwAG/8QALBEAAgEDAgQEBgMAAAAAAAAAAQIDAAQRBRIhQVFhMXGBkQYiMpLR4SOhwf/aAAwDAQACEQMRAD8A0X7raY/03Zf6fF+Xrx0tpcd9OWMfxoIfy9ddmCqWZlUAEkscAD59LTX2p6mUQ0luh9pqaskUFBuTL47SyoXBYMGBSPBxwzj7g5SMDJAodL68c4ErfcfzXTu0ugqCKKddO2OWCRXb2g0MKQhUBLENtJcAAkmNXxjnHQxddSaOguJpYrFpqMp5e/bZRU7FkClGJGzCndgHb3GO5GQHXHihaNI06UVwrjqi901aa2JopCsFPJ6lCBl2tKoXYpBwpKnkg4C7pPHDxBut3pLTpWgtdDNOyU9NBDSwpk8BVDEDHYYy3GBz26w3An5VHtTdUuox/PcFT0LNn2GceuK0LpLUOlrtMkE2k9Pqzu8aySWyOGNZFV2ZCyecMhI2bvjGOc8dFdoTQtxgjl93bHD5s5p42NHTvHJIPsrIoK7s8bSQ37o6yVU+M2sLdWVNp1Zp221E8DGKaKegjSSPggruUK44Yjhxw3yPTO8PtfWPUUkZsAjt9xBw9BUo0sdQZDiQYTmUkiLEbjPDlWMjg9SGXPFRUOl24LQXBfHRmz7HB9s1oH3W0xn/AC3ZP6fF+XqKs0vpgUU592rLxE5/w+L7p/d6qWW4Pbq1bVNULMqxwiaLczSUMkm7aGLHc0TMNqkjKkbSSPqEVdzQ1PGPoX/8PW4jjPIUnOoXg8ZW+4/muVq2ojjp4aadIzSMHnrd/wBqniAZlGeMsxjU54w56zx4v6nl0/aaquilzqLUC7alvMSRYYU9G2Jo227GZXwcBwoZWOWPTs1nO93vly0lbHpWvElh86KGqUGLZJNsLNlWBGUGRg/DtnIzT+kJQNSa1jtWxUSgoqaFFXGBiCPPb5sSf+eh79zEmcUbpICCSbmgyPPIA9ic+lJmeCSeV5ZmLyOcknpq+AemPC6/S1NFrS53i13VT5tLUwuI4EVcHJfadrAgnLYHbBz1f8PvB+9altX63nhkp6KTin9Pqm/e/Bfx+PRDN4FTRbV852dpEVkP3SwB/tnpUl0ynOM1QRSSneedLTxor7Xf9UPcoKhqusengjkli4RWjTYxJ+2SQMYwAOOegehSooqhKimkMcqHIIHWg4vAqeQ4V25OOCMjoC174dXvR8yNcIC1HK2IalB6GP3Sfg2OcdUa93HNSY5YGEiniOlOHwd1odRT21rp59UalWoK2njjjCyl15mnY4ZgI4+45XyjyN+C8rZLUNYamnrARU0qyU8hJyX2j0uf9yFH/m6yv+j1p/3judz0/LMIIZaUTbzAsu0pLGfqtwcjI5yME5BHHWnLbdKOqueqrXDVLNVUDRmoUDlS9Mu3Pw7JnA6dWTmWLdXauqmRZFGN6g47+B/sGkt4gXOvsvjLJU10ogudvt1ylpJmYolxt8kE0sUQ45khl9OB9Ycj6vI/4v0L3W1aZ1is6TLcLVSLWFRylT7PG5B+W5GUj8FPTq8btPXG72ehuFttS3aW2zec1JG/lVZHBD00uDtlUjO1sq4yGB46SOk7xa4b4lhqaa63OjrbYbTVWmaAU9wpaiB3kpSUJ27zGwhVlOC20HbkAMbm1F7alR4iq6dcLG3z/SwIPl19Dg+lR0Nju1RSrGmo7igL7IYzXsQsYDKPSDzyFwB8OMfEQJZKh6tqObUVXJ6g4/bSylMn+52tg/Dr7dNJVlNbY9Q2CVrzp+UF4blSofo8HlZVHqjdexzxnobAiYAhgR14aeCSFtrrRM1pNGNyjcvIjiP15HjRJT2Gt8tpfe6VvS2PKqHyCDwTk8jjsPn+B6q1donqbJUTT36rnSOEuYpakuHkHPAz2yMfMHrjAxxFXD7GU5DDgg9FVo0XU4pK7UFNVUVFUyrFR0wX9ruMh58uFG/Dku2FUZJyB1NvbPO4VFrorSVxvkG1OZP+dT2FWPDueo0dou6ashZfbKiqo6SigU+uVPbIvOIHyOAmficj4Ho48Hi7651pFbaoVtMa6srLtcosmKeZyywUkZIwREhdmYcbsDsASvLtcqK56mqoqKK5TVFVX08VpsdnjHtHsNJFL5Mhlb0wrK8vnbsM2NrYwwYaH8OLBVab8O47ZWUdvoZFjkc0tEG8uEMMhCzEmRgMZc/WPPbHXuo7dbO1EfOhdRuFmfKjAAAA7Dw/feptU6vSyXmG3NR+0M8QkXa/q5J4KgEgYAOe3ftjpcar0zfb7TyXrTiVdJTOfN9nq7XS3WJwcHMC1AWVBkk4XK/cHbqxUeJN2qCDUWqzzEDALwMTj/t26mHilfQABQ2wY7eh/wA/Q0UjRsWBoRYJFPCl/pq4ao0xqiulsNJqy+XWrT6aio9O/qyhll+/MJtyhu+WREJ+LdFWk6bV2upZKmWi0NKiMBLWrZPMplkBw8Ub+ZvqHXszAogPZn7dd+LxF1TURkLZrfJGw2ndGwUj+Z+r1o1NfKWiipKe36foKaJAkcMaOFRR2AVTgDrWe9hccVGaZW9lqH1QKR3GaE77V6u0ZfqWlt+mtKCoeNFggjoBALlIAN/stTn0zfa8mVePstJ0K+1alv2sKuvjk1VQXmoiamMF40eK/wAqM/WjiZSIlQ85JjXPxJ6c7381qxrdorRVrFIsyK1KWCOpyrjcxwwPY4466Taujb4oBjtnqqahBGOCjNEto+pS8XXJ7ml3pyK+aHkirr5Z7tcJwAkZip6a3UiluABDSh1L/DMrZ59Iz0caE1fUartt4eot60ZpQyqm8ljkNkHjAwAB8yQTgDHVltUwOpVhGykYKkZBH8OoqrVEAoahVCgGNuAPwPQj3ayNu3VQ/Dl8eJAr/9k=" alt="NET Logo">
-    <div class="brand-text">
-      <h2>Network<br>Evangelistic Team</h2>
-      <span>Management Platform</span>
-    </div>
+    <div class="brand-text"><h2>Network<br>Evangelistic Team</h2><span>Management Platform</span></div>
   </div>
   <nav class="sidebar-nav">
-    {%- if role == "admin" %}
+    {%- if role == 'admin' %}
     <div class="nav-section-label">Administration</div>
     <a href="{{ url_for('admin.dashboard') }}" class="nav-item {{ 'active' if active_page=='dashboard' }}"><span class="nav-icon">🏛️</span> Dashboard</a>
     <a href="{{ url_for('admin.members') }}" class="nav-item {{ 'active' if active_page=='members' }}"><span class="nav-icon">👥</span> Members</a>
@@ -16,17 +13,22 @@
     <a href="{{ url_for('admin.attendance') }}" class="nav-item {{ 'active' if active_page=='attendance' }}"><span class="nav-icon">📋</span> Attendance</a>
     <a href="{{ url_for('admin.minutes') }}" class="nav-item {{ 'active' if active_page=='minutes' }}"><span class="nav-icon">📝</span> Meeting Minutes</a>
     <a href="{{ url_for('admin.branches') }}" class="nav-item {{ 'active' if active_page=='branches' }}"><span class="nav-icon">🌿</span> Branches</a>
+    <a href="{{ url_for('chat.index') }}" class="nav-item {{ 'active' if active_page=='chat_wa' }}"><span class="nav-icon">💬</span> Team Chat</a>
+    <a href="{{ url_for('admin.audit_logs') }}" class="nav-item {{ 'active' if active_page=='audit' }}"><span class="nav-icon">🔍</span> Audit Logs</a>
     <div class="nav-section-label">Account</div>
     <a href="{{ url_for('auth.register') }}" class="nav-item {{ 'active' if active_page=='register' }}"><span class="nav-icon">➕</span> Add Member</a>
-    {%- elif role == "vice_secretary" %}
+    {%- elif role == 'vice_secretary' %}
     <div class="nav-section-label">Vice Secretary</div>
     <a href="{{ url_for('vs.dashboard') }}" class="nav-item {{ 'active' if active_page=='dashboard' }}"><span class="nav-icon">🏠</span> Dashboard</a>
     <a href="{{ url_for('vs.upload_attendance') }}" class="nav-item {{ 'active' if active_page=='upload' }}"><span class="nav-icon">📸</span> Upload Attendance</a>
     <a href="{{ url_for('vs.manual_attendance') }}" class="nav-item {{ 'active' if active_page=='manual' }}"><span class="nav-icon">✏️</span> Manual Attendance</a>
+    <a href="{{ url_for('vs.minutes') }}" class="nav-item {{ 'active' if active_page=='minutes' }}"><span class="nav-icon">📝</span> Meeting Minutes</a>
     <a href="{{ url_for('vs.record_meeting') }}" class="nav-item {{ 'active' if active_page=='record' }}"><span class="nav-icon">🎙️</span> Record Meeting</a>
+    <a href="{{ url_for('chat.index') }}" class="nav-item {{ 'active' if active_page=='chat_wa' }}"><span class="nav-icon">💬</span> Team Chat</a>
     {%- else %}
     <div class="nav-section-label">Member Portal</div>
     <a href="{{ url_for('member.dashboard') }}" class="nav-item {{ 'active' if active_page=='dashboard' }}"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a href="{{ url_for('chat.index') }}" class="nav-item {{ 'active' if active_page=='chat_wa' }}"><span class="nav-icon">💬</span> Team Chat</a>
     <a href="{{ url_for('member.attendance') }}" class="nav-item {{ 'active' if active_page=='attendance' }}"><span class="nav-icon">📋</span> My Attendance</a>
     <a href="{{ url_for('member.chat') }}" class="nav-item {{ 'active' if active_page=='chat' }}"><span class="nav-icon">💬</span> Chat</a>
     <a href="{{ url_for('member.profile') }}" class="nav-item {{ 'active' if active_page=='profile' }}"><span class="nav-icon">👤</span> My Profile</a>
@@ -34,10 +36,10 @@
   </nav>
   <div class="sidebar-footer">
     <div class="user-badge">
-      <div class="avatar">{{ user.full_name[0] if user else '?' }}</div>
+      <div class="avatar">{{ user.full_name[0] if user else "?" }}</div>
       <div class="user-info">
-      <strong>{{ user.full_name.split()[0] if user else 'User' }}</strong>
-        <span>{{ user.role.replace("_"," ") if user else '' }}</span>
+        <strong>{{ user.full_name.split()[0] if user else "User" }}</strong>
+        <span>{{ user.role.replace("_"," ") if user else "" }}</span>
       </div>
       <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Logout">⏻</a>
     </div>

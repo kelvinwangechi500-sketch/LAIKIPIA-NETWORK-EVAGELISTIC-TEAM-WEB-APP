@@ -14,89 +14,74 @@
     <div class="topbar">
       <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
       <div class="topbar-title">Admin Dashboard</div>
-      <div class="topbar-actions">
-        <button class="notif-btn" title="Notifications">🔔<span class="notif-dot"></span></button>
-        <span style="font-size:13px;color:var(--grey-400)">{{ current_user.full_name }}</span>
-      </div>
+      <div class="topbar-actions"><span style="font-size:13px;color:var(--grey-400)">{{ current_user.full_name }}</span></div>
     </div>
     <div class="content-body">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
       {% endwith %}
 
+      <!-- Stats -->
       <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-            <div class="val">{{ total_members }}</div>
-            <div class="lbl">Total Members</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📢</div>
-          <div class="stat-info">
-            <div class="val">{{ total_announcements }}</div>
-            <div class="lbl">Announcements</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📝</div>
-          <div class="stat-info">
-            <div class="val">{{ total_meetings }}</div>
-            <div class="lbl">Meeting Records</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">✝️</div>
-          <div class="stat-info">
-            <div class="val">Active</div>
-            <div class="lbl">Platform Status</div>
-          </div>
-        </div>
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-info"><div class="val">{{ total_members }}</div><div class="lbl">Active Members</div></div></div>
+        <div class="stat-card"><div class="stat-icon">📢</div><div class="stat-info"><div class="val">{{ total_announcements }}</div><div class="lbl">Announcements</div></div></div>
+        <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><div class="val">{{ total_meetings }}</div><div class="lbl">Meeting Records</div></div></div>
+        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-info"><div class="val">{{ att_rate }}%</div><div class="lbl">Attendance Rate</div></div></div>
       </div>
 
       <div class="grid-2">
+        <!-- Left column -->
         <div>
-          <div class="card">
-            <div class="card-header">
-              <h3>📢 Recent Announcements</h3>
-              <a href="{{ url_for('admin.announcements') }}" class="btn btn-sm btn-outline">View All</a>
-            </div>
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header"><h3>📢 Recent Announcements</h3><a href="{{ url_for('admin.announcements') }}" class="btn btn-sm btn-outline">View All</a></div>
             <div class="card-body" style="padding:16px">
               {% for ann in recent_announcements %}
               <div class="announcement {% if ann.is_pinned %}pinned{% endif %}">
-                <div class="announcement-meta">
-                  {% if ann.is_pinned %}📌 Pinned · {% endif %}
-                  {{ ann.author.full_name }} · {{ ann.created_at.strftime('%d %b %Y') }}
-                </div>
+                <div class="announcement-meta">{% if ann.is_pinned %}📌 Pinned · {% endif %}{{ ann.author.full_name }} · {{ ann.created_at.strftime('%d %b %Y') }}</div>
                 <h4>{{ ann.title }}</h4>
                 <p>{{ ann.body[:120] }}{% if ann.body|length > 120 %}…{% endif %}</p>
               </div>
-              {% else %}
-              <div class="empty-state">No announcements yet.</div>
-              {% endfor %}
+              {% else %}<div class="empty-state">No announcements yet.</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>📝 Recent Meeting Minutes</h3><a href="{{ url_for('admin.minutes') }}" class="btn btn-sm btn-outline">View All</a></div>
+            <div class="card-body" style="padding:14px">
+              {% for m in recent_minutes %}
+              <div style="border:1px solid var(--grey-200);border-radius:10px;padding:12px;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:start">
+                  <div>
+                    <strong style="font-size:14px">{{ m.title }}</strong>
+                    <div style="font-size:12px;color:var(--grey-400)">{{ m.meeting_date.strftime('%d %B %Y') }}</div>
+                  </div>
+                  <div style="display:flex;gap:5px">
+                    <a href="{{ url_for('admin.edit_minutes', mid=m.id) }}" class="btn btn-sm btn-outline" style="font-size:11px">✏️</a>
+                    <a href="{{ url_for('admin.export_minutes', mid=m.id, fmt='pdf') }}" class="btn btn-sm btn-grey" style="font-size:11px">⬇</a>
+                  </div>
+                </div>
+                {% if m.summary %}<p style="font-size:13px;color:var(--grey-600);margin-top:6px;line-height:1.6">{{ m.summary[:120] }}{% if m.summary|length > 120 %}…{% endif %}</p>{% endif %}
+              </div>
+              {% else %}<div class="empty-state">No minutes yet.</div>{% endfor %}
             </div>
           </div>
         </div>
+
+        <!-- Right column -->
         <div>
-          <div class="card">
-            <div class="card-header">
-              <h3>👥 Recent Members</h3>
-              <a href="{{ url_for('admin.members') }}" class="btn btn-sm btn-outline">Manage</a>
-            </div>
-            <div class="card-body" style="padding:0">
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header"><h3>👥 Recent Members</h3><a href="{{ url_for('admin.members') }}" class="btn btn-sm btn-outline">Manage</a></div>
+            <div class="table-wrap">
               <table class="data-table">
                 <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
                 <tbody>
                   {% for m in recent_members %}
                   <tr>
                     <td><strong>{{ m.full_name }}</strong><br><small style="color:var(--grey-400)">{{ m.email }}</small></td>
-                    <td><span class="pill pill-blue">{{ m.role.replace('_',' ') }}</span></td>
-                    <td><span class="pill {% if m.is_active %}pill-green{% else %}pill-red{% endif %}">{{ 'Active' if m.is_active else 'Inactive' }}</span></td>
+                    <td><span class="pill pill-blue" style="font-size:11px">{{ m.role.replace('_',' ') }}</span></td>
+                    <td><span class="pill {% if m.is_active %}pill-green{% else %}pill-red{% endif %}" style="font-size:11px">{{ 'Active' if m.is_active else 'Inactive' }}</span></td>
                   </tr>
-                  {% else %}
-                  <tr><td colspan="3" class="empty-state">No members yet.</td></tr>
-                  {% endfor %}
+                  {% else %}<tr><td colspan="3" class="empty-state">No members yet.</td></tr>{% endfor %}
                 </tbody>
               </table>
             </div>
@@ -108,7 +93,9 @@
               <a href="{{ url_for('auth.register') }}" class="btn btn-primary">➕ Add New Member</a>
               <a href="{{ url_for('admin.announcements') }}" class="btn btn-outline">📢 Post Announcement</a>
               <a href="{{ url_for('admin.attendance') }}" class="btn btn-grey">📋 View Attendance</a>
+              <a href="{{ url_for('admin.export_attendance', fmt='excel') }}" class="btn btn-grey">⬇ Export Attendance (Excel)</a>
               <a href="{{ url_for('admin.minutes') }}" class="btn btn-grey">📝 Meeting Minutes</a>
+              <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-grey">🔍 Audit Logs</a>
             </div>
           </div>
         </div>
@@ -117,4 +104,5 @@
   </div>
 </div>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body></html>
+</body>
+</html>

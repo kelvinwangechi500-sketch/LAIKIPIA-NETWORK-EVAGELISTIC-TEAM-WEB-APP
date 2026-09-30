@@ -58,7 +58,7 @@ def attendance():
 @login_required
 def chat():
     from flask import redirect, url_for
-    return redirect(url_for("chat.index"))
+    return redirect(url_for('chat.index'))
 
 
 @member_bp.route("/profile")

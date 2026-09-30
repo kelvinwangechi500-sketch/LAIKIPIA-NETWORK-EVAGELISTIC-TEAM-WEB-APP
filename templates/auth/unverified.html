@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Email — Network Evangelistic Team</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#B91C1C">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Source Sans 3",sans-serif;min-height:100vh;background:#111827;display:flex;align-items:center;justify-content:center;padding:20px}
+.wrap{width:100%;max-width:440px}
+.card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.4)}
+.header{background:linear-gradient(160deg,#7F1D1D 0%,#111827 100%);padding:32px 40px 28px;text-align:center}
+.header h1{font-family:"Playfair Display",serif;color:#fff;font-size:20px;margin-bottom:4px}
+.header p{color:rgba(255,255,255,.55);font-size:12px;letter-spacing:1.2px;text-transform:uppercase}
+.body{padding:32px 36px}
+.flash{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border-left:4px solid}
+.flash.success{background:#d1fae5;border-color:#065f46;color:#064e3b}
+.flash.danger{background:#fee2e2;border-color:#B91C1C;color:#7F1D1D}
+.flash.warning{background:#fef3c7;border-color:#92400e;color:#78350f}
+.flash.info{background:#dbeafe;border-color:#1e40af;color:#1e3a8a}
+.icon{font-size:40px;text-align:center;margin-bottom:12px}
+.msg{text-align:center;color:#374151;font-size:14px;line-height:1.55;margin-bottom:22px}
+label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px}
+input{width:100%;padding:10px 13px;border-radius:8px;border:1px solid #E5E7EB;font-size:14px;font-family:inherit;background:#F3F4F6;outline:none;margin-bottom:14px}
+input:focus{border-color:#B91C1C;background:#fff;box-shadow:0 0 0 3px rgba(185,28,28,.08)}
+.btn{width:100%;padding:12px;border-radius:8px;background:#B91C1C;color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:hover{background:#7F1D1D}
+.btn-grey{background:#6B7280;margin-top:10px}
+.btn-grey:hover{background:#4B5563}
+.footer{padding:0 36px 24px;text-align:center;font-size:13px;color:#6B7280}
+.footer a{color:#B91C1C;font-weight:600;text-decoration:none}
+.divider{height:1px;background:#E5E7EB;margin:0 0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <h1>Email Verification</h1>
+      <p>Network Evangelistic Team</p>
+    </div>
+    <div class="body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div class="icon">📧</div>
+      <p class="msg">
+        {% if current_user.is_authenticated %}
+          We sent a verification link to <strong>{{ current_user.email }}</strong>.
+          Click the link in that email to activate your account.
+        {% else %}
+          Your account is not verified yet. Enter your email below to resend the verification link.
+        {% endif %}
+      </p>
+
+      <form method="POST" action="{{ url_for('auth.unverified') }}">
+        {% if not current_user.is_authenticated %}
+        <label>Email Address</label>
+        <input type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+        {% endif %}
+        <button type="submit" class="btn">Resend Verification Email</button>
+      </form>
+
+      {% if current_user.is_authenticated %}
+      <form method="GET" action="{{ url_for('auth.logout') }}">
+        <button type="submit" class="btn btn-grey">Sign out</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="footer">
+      <div class="divider"></div>
+      Already verified? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

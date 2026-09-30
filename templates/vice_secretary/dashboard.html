@@ -14,6 +14,7 @@
     <div class="topbar">
       <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
       <div class="topbar-title">Vice Secretary Dashboard</div>
+      <div class="topbar-actions"><span style="font-size:13px;color:var(--grey-400)">{{ current_user.full_name }}</span></div>
     </div>
     <div class="content-body">
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -21,47 +22,165 @@
       {% endwith %}
 
       <!-- Quick Actions -->
-      <div class="grid-3" style="margin-bottom:20px">
-        <a href="{{ url_for('vs.upload_attendance') }}" class="stat-card" style="text-decoration:none;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div class="grid-3" style="margin-bottom:22px">
+        <a href="{{ url_for('vs.upload_attendance') }}" class="stat-card" style="text-decoration:none;cursor:pointer">
           <div class="stat-icon">📸</div>
-          <div class="stat-info"><div class="val" style="font-size:16px">Upload</div><div class="lbl">OCR Attendance</div></div>
+          <div class="stat-info"><div class="val" style="font-size:15px">Upload</div><div class="lbl">OCR Attendance</div></div>
         </a>
-        <a href="{{ url_for('vs.manual_attendance') }}" class="stat-card" style="text-decoration:none;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <a href="{{ url_for('vs.manual_attendance') }}" class="stat-card" style="text-decoration:none;cursor:pointer">
           <div class="stat-icon">✏️</div>
-          <div class="stat-info"><div class="val" style="font-size:16px">Manual</div><div class="lbl">Record Attendance</div></div>
+          <div class="stat-info"><div class="val" style="font-size:15px">Manual</div><div class="lbl">Record Attendance</div></div>
         </a>
-        <a href="{{ url_for('vs.record_meeting') }}" class="stat-card" style="text-decoration:none;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <a href="{{ url_for('vs.record_meeting') }}" class="stat-card" style="text-decoration:none;cursor:pointer">
           <div class="stat-icon">🎙️</div>
-          <div class="stat-info"><div class="val" style="font-size:16px">Record</div><div class="lbl">Meeting Minutes</div></div>
+          <div class="stat-info"><div class="val" style="font-size:15px">Record</div><div class="lbl">Meeting Minutes</div></div>
         </a>
       </div>
 
-      <div class="card">
-        <div class="card-header"><h3>📋 Recent Attendance Records</h3></div>
+      <!-- Attendance by Date Section -->
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header">
+          <h3>📋 Attendance Register</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <a href="{{ url_for('vs.export_attendance', fmt='csv', date=date_filter) }}" class="btn btn-sm btn-outline">⬇ CSV</a>
+            <a href="{{ url_for('vs.export_attendance', fmt='excel', date=date_filter) }}" class="btn btn-sm btn-outline">⬇ Excel</a>
+          </div>
+        </div>
+
+        <!-- Date Selector -->
+        <div style="padding:14px 20px;border-bottom:1px solid var(--grey-200);background:var(--grey-100)">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600;color:var(--grey-600)">📅 Select Meeting Date:</span>
+            <form method="GET" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="date" name="date" value="{{ date_filter }}"
+                class="form-control" style="width:auto;margin:0"
+                onchange="this.form.submit()">
+              <button type="submit" class="btn btn-grey btn-sm">View</button>
+            </form>
+          </div>
+
+          <!-- Date buttons for quick navigation -->
+          {% if all_dates %}
+          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+            <span style="font-size:12px;color:var(--grey-400);padding-top:4px">Quick select:</span>
+            {% for d in all_dates[:10] %}
+            <a href="{{ url_for('vs.dashboard', date=d) }}"
+               class="btn btn-sm {% if date_filter == d|string %}btn-primary{% else %}btn-grey{% endif %}"
+               style="font-size:11px;padding:4px 10px">
+              {{ d.strftime('%d %b %Y') }}
+            </a>
+            {% endfor %}
+            {% if all_dates|length > 10 %}
+            <span style="font-size:12px;color:var(--grey-400);padding-top:4px">+{{ all_dates|length - 10 }} more</span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        {% if selected_date %}
+        <!-- Stats for selected date -->
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--grey-200)">
+          <div style="flex:1;padding:16px;text-align:center;border-right:1px solid var(--grey-200)">
+            <div style="font-size:24px;font-weight:700;color:var(--grey-700)">{{ total_count }}</div>
+            <div style="font-size:12px;color:var(--grey-400);margin-top:2px">Total Members</div>
+          </div>
+          <div style="flex:1;padding:16px;text-align:center;border-right:1px solid var(--grey-200)">
+            <div style="font-size:24px;font-weight:700;color:#065f46">{{ present_count }}</div>
+            <div style="font-size:12px;color:var(--grey-400);margin-top:2px">✅ Present</div>
+          </div>
+          <div style="flex:1;padding:16px;text-align:center;border-right:1px solid var(--grey-200)">
+            <div style="font-size:24px;font-weight:700;color:#7F1D1D">{{ absent_count }}</div>
+            <div style="font-size:12px;color:var(--grey-400);margin-top:2px">❌ Absent</div>
+          </div>
+          <div style="flex:1;padding:16px;text-align:center">
+            <div style="font-size:24px;font-weight:700;color:var(--red)">
+              {{ ((present_count / total_count * 100) | round(0) | int) if total_count else 0 }}%
+            </div>
+            <div style="font-size:12px;color:var(--grey-400);margin-top:2px">Attendance Rate</div>
+          </div>
+        </div>
+
+        <!-- Attendance Table -->
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Member</th><th>Date</th><th>Status</th><th>Source</th></tr></thead>
-            <tbody>
-              {% for r in recent_records %}
+            <thead>
               <tr>
+                <th>#</th>
+                <th>Member Name</th>
+                <th>Residence</th>
+                <th>Year</th>
+                <th>Status</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in filtered_records %}
+              <tr>
+                <td style="color:var(--grey-400)">{{ loop.index }}</td>
                 <td><strong>{{ r.user.full_name }}</strong></td>
-                <td>{{ r.meeting_date.strftime('%d %b %Y') }}</td>
+                <td style="font-size:12px;color:var(--grey-400)">{{ r.user.residence or '—' }}</td>
+                <td style="font-size:12px;color:var(--grey-400)">{{ r.user.year or '—' }}</td>
                 <td>
                   <span class="pill {% if r.status=='present' %}pill-green{% elif r.status=='absent' %}pill-red{% else %}pill-yellow{% endif %}">
+                    {% if r.status=='present' %}✅{% elif r.status=='absent' %}❌{% else %}⚠️{% endif %}
                     {{ r.status }}
                   </span>
                 </td>
-                <td><span class="pill pill-grey">{{ r.source }}</span></td>
+                <td><span class="pill pill-grey" style="font-size:11px">{{ r.source }}</span></td>
               </tr>
               {% else %}
-              <tr><td colspan="4" class="empty-state">No records yet. Start by uploading or manually recording attendance.</td></tr>
+              <tr>
+                <td colspan="6" class="empty-state">
+                  No attendance records for {{ selected_date.strftime('%d %B %Y') }}.
+                  <a href="{{ url_for('vs.upload_attendance') }}">Upload attendance</a> or
+                  <a href="{{ url_for('vs.manual_attendance') }}">record manually</a>.
+                </td>
+              </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
+        {% else %}
+        <div class="empty-state" style="padding:40px">
+          <div style="font-size:40px;margin-bottom:12px">📋</div>
+          <p>No attendance records yet.</p>
+          <p style="margin-top:8px">
+            <a href="{{ url_for('vs.upload_attendance') }}" class="btn btn-primary btn-sm">📸 Upload Attendance</a>
+            &nbsp;
+            <a href="{{ url_for('vs.manual_attendance') }}" class="btn btn-grey btn-sm">✏️ Manual Entry</a>
+          </p>
+        </div>
+        {% endif %}
       </div>
+
+      <!-- Recent Minutes -->
+      {% if recent_minutes %}
+      <div class="card">
+        <div class="card-header">
+          <h3>📝 Recent Meeting Minutes</h3>
+          <a href="{{ url_for('vs.minutes') }}" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body" style="padding:14px">
+          {% for m in recent_minutes %}
+          <div style="border:1px solid var(--grey-200);border-radius:10px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <strong style="font-size:14px">{{ m.title }}</strong>
+              <div style="font-size:12px;color:var(--grey-400);margin-top:2px">{{ m.meeting_date.strftime('%d %B %Y') }}</div>
+              {% if m.summary %}<p style="font-size:13px;color:var(--grey-600);margin-top:6px;line-height:1.5">{{ m.summary[:100] }}{% if m.summary|length > 100 %}…{% endif %}</p>{% endif %}
+            </div>
+            <div style="display:flex;gap:5px;flex-shrink:0;margin-left:10px">
+              <a href="{{ url_for('vs.edit_minutes', mid=m.id) }}" class="btn btn-sm btn-outline" style="font-size:11px">✏️</a>
+              <a href="{{ url_for('vs.export_minutes', mid=m.id, fmt='pdf') }}" class="btn btn-sm btn-grey" style="font-size:11px">⬇ PDF</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
     </div>
   </div>
 </div>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body></html>
+</body>
+</html>

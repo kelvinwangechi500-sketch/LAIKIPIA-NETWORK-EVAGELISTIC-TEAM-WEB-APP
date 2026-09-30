@@ -1,9 +1,3 @@
-"""
-User Model
-===========
-Roles: admin | vice_secretary | member
-"""
-
 from datetime import datetime
 from flask_login import UserMixin
 from extensions import db, login_manager
@@ -17,8 +11,6 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(30), nullable=False, default="member")
-    # role is one of: "admin", "vice_secretary", "member"
-
     phone = db.Column(db.String(20))
     residence = db.Column(db.String(150))
     year = db.Column(db.String(50))
@@ -28,23 +20,30 @@ class User(db.Model, UserMixin):
     joined_date = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime)
 
-    # Relationships — foreign_keys specified to avoid ambiguity
+    # Email verification
+    email_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(64), index=True)
+    verification_sent_at = db.Column(db.DateTime)
+
     attendance_records = db.relationship(
-        "Attendance",
-        foreign_keys="Attendance.user_id",
-        backref="user",
-        lazy="dynamic"
+        "Attendance", foreign_keys="Attendance.user_id",
+        backref="user", lazy="dynamic"
     )
     announcements = db.relationship(
-        "Announcement",
-        backref="author",
-        lazy="dynamic"
+        "Announcement", backref="author", lazy="dynamic"
     )
     chat_messages = db.relationship(
-        "ChatMessage",
-        backref="sender",
-        lazy="dynamic"
+        "ChatMessage", backref="sender", lazy="dynamic"
     )
+
+    def has_role(self, *roles):
+        return self.role in roles
+
+    def is_admin(self):
+        return self.role == "admin"
+
+    def is_staff(self):
+        return self.role in ("admin", "vice_secretary")
 
     def __repr__(self):
         return f"<User {self.email} [{self.role}]>"

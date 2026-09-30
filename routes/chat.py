@@ -43,11 +43,11 @@ def unread_count(room_id, user_id):
         q = q.filter(ChatMessage.created_at > last_read.read_at)
     return q.count()
 
-
 # ── Main chat page ─────────────────────────────────────────────────────────────
 @chat_bp.route("/")
 @login_required
 def index():
+    # Group rooms
     group_rooms = ChatRoom.query.filter_by(room_type="group").all()
     rooms_data = []
     for room in group_rooms:
@@ -63,6 +63,7 @@ def index():
             "unread": unread_count(room.room_id, current_user.id),
         })
 
+    # DM conversations
     all_members = User.query.filter(
         User.id != current_user.id,
         User.is_active == True
@@ -74,7 +75,7 @@ def index():
         last_msg = (ChatMessage.query
             .filter_by(room=rid, is_deleted=False)
             .order_by(ChatMessage.created_at.desc()).first())
-        if last_msg:
+        if last_msg:  # only show DMs that have messages
             dm_data.append({
                 "room_id": rid,
                 "name": member.full_name,
@@ -94,7 +95,7 @@ def index():
         current_user=current_user)
 
 
-# ── Get messages ──────────────────────────────────────────────────────────────
+# ── Get messages for a room ───────────────────────────────────────────────────
 @chat_bp.route("/messages/<room_id>")
 @login_required
 def get_messages(room_id):
@@ -106,15 +107,13 @@ def get_messages(room_id):
     messages = q.order_by(ChatMessage.created_at.desc()).limit(limit).all()
     messages.reverse()
 
+    # Mark all as read
     for msg in messages:
         if msg.sender_id != current_user.id:
-            if not MessageRead.query.filter_by(
-                message_id=msg.id, user_id=current_user.id
-            ).first():
-                db.session.add(MessageRead(
-                    message_id=msg.id, user_id=current_user.id
-                ))
+            if not MessageRead.query.filter_by(message_id=msg.id, user_id=current_user.id).first():
+                db.session.add(MessageRead(message_id=msg.id, user_id=current_user.id))
     db.session.commit()
+
     return jsonify([_msg_dict(m) for m in messages])
 
 
@@ -156,8 +155,10 @@ def upload_file():
     db.session.add(msg)
     db.session.commit()
 
+    # Emit via socket
     from extensions import socketio
     socketio.emit("new_message", _msg_dict(msg), room=room_id)
+
     return jsonify(_msg_dict(msg)), 201
 
 
@@ -176,7 +177,7 @@ def delete_message(mid):
     return jsonify({"success": True})
 
 
-# ── Get members for new DM ────────────────────────────────────────────────────
+# ── Get all members for new DM ────────────────────────────────────────────────
 @chat_bp.route("/members")
 @login_required
 def get_members():
@@ -188,12 +189,11 @@ def get_members():
         "name": m.full_name,
         "avatar": m.full_name[0].upper(),
         "role": m.role,
-        "online": bool(m.last_seen and
-                      (datetime.utcnow() - m.last_seen).seconds < 300),
+        "online": m.last_seen and (datetime.utcnow() - m.last_seen).seconds < 300,
     } for m in members])
 
 
-# ── Mark read ─────────────────────────────────────────────────────────────────
+# ── Read receipt ──────────────────────────────────────────────────────────────
 @chat_bp.route("/read/<room_id>", methods=["POST"])
 @login_required
 def mark_read(room_id):
@@ -203,15 +203,12 @@ def mark_read(room_id):
         ChatMessage.is_deleted == False
     ).all()
     for msg in messages:
-        if not MessageRead.query.filter_by(
-            message_id=msg.id, user_id=current_user.id
-        ).first():
+        if not MessageRead.query.filter_by(message_id=msg.id, user_id=current_user.id).first():
             db.session.add(MessageRead(message_id=msg.id, user_id=current_user.id))
     db.session.commit()
     return jsonify({"ok": True})
 
 
-# ── Helper ────────────────────────────────────────────────────────────────────
 def _msg_dict(m):
     reads = MessageRead.query.filter_by(message_id=m.id).count()
     return {
