@@ -4,7 +4,7 @@ Authentication Routes
 Handles: login, logout, self-registration, email verification, change-password
 """
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db, bcrypt
 from models.user import User
@@ -13,6 +13,32 @@ from services.email_service import send_verification_email, token_is_valid
 from datetime import datetime
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def smtp_is_ready() -> bool:
+    """Only enforce email verification when SMTP is actually configured with real credentials."""
+    server = (current_app.config.get("MAIL_SERVER") or "").strip()
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+
+    placeholders = {
+        "",
+        "your@gmail.com",
+        "your-app-password",
+        "your-password",
+        "example@gmail.com",
+        "change-me",
+        "changeme",
+        "your-long-secret-key-here",
+    }
+
+    if not server or not username or not password:
+        return False
+    if server.lower() in {"smtp.gmail.com", "smtp-relay.gmail.com"} and username.lower() in placeholders:
+        return False
+    if username.lower() in placeholders or password.lower() in placeholders:
+        return False
+    return True
 
 
 # ── Login ────────────────────────────────────────────────────────────────────
@@ -29,10 +55,17 @@ def login():
 
         user = User.query.filter_by(email=email, is_active=True).first()
         if user and bcrypt.check_password_hash(user.password_hash, password):
-            if not user.email_verified:
+            smtp_ready = smtp_is_ready()
+            if not user.email_verified and smtp_ready:
                 login_user(user)  # temporary session so they can resend
                 flash("Please verify your email before continuing.", "warning")
                 return redirect(url_for("auth.unverified"))
+
+            if not user.email_verified:
+                user.email_verified = True
+                user.verification_token = None
+                user.verification_sent_at = None
+                db.session.commit()
 
             login_user(user, remember=True)
             user.last_seen = datetime.utcnow()
@@ -97,8 +130,10 @@ def register():
             for e in errors:
                 flash(e, "danger")
         else:
-            # Admin-created accounts are auto-verified
-            auto_verify = is_admin
+            smtp_ready = smtp_is_ready()
+            # Admin-created accounts are auto-verified.
+            # If SMTP is not configured, auto-verify self-registered users too so the app keeps working.
+            auto_verify = is_admin or not smtp_ready
 
             new_user = User(
                 full_name=full_name,
@@ -119,18 +154,24 @@ def register():
                 flash(f"Account created for {full_name} ({role}).", "success")
                 return redirect(url_for("admin.members"))
 
-            # Self-registration → send verification email
-            sent = send_verification_email(new_user)
-            if sent:
-                flash(
-                    "Account created! Check your email for a verification link.",
-                    "success",
-                )
+            if smtp_ready:
+                # Self-registration → send verification email
+                sent = send_verification_email(new_user)
+                if sent:
+                    flash(
+                        "Account created! Check your email for a verification link.",
+                        "success",
+                    )
+                else:
+                    flash(
+                        "Account created, but we could not send the verification email. "
+                        "Please use Resend on the next page.",
+                        "warning",
+                    )
             else:
                 flash(
-                    "Account created, but we could not send the verification email. "
-                    "Please use Resend on the next page.",
-                    "warning",
+                    "Account created successfully. Email verification is disabled on this deployment.",
+                    "success",
                 )
             return redirect(url_for("auth.login"))
 
