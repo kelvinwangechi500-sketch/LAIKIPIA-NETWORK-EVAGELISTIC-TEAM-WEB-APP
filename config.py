@@ -3,17 +3,21 @@ from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+def _env(name, default=""):
+    value = os.environ.get(name, "").strip()
+    return value or default
+
 def _fix_db_url(url):
     if url and url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql://", 1)
     return url
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "NET-EVT-dev-secret")
+    SECRET_KEY = _env("SECRET_KEY", "NET-EVT-dev-secret")
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    _raw_db = os.environ.get("DATABASE_URL", "")
+    _raw_db = _env("DATABASE_URL")
     SQLALCHEMY_DATABASE_URI = (
         _fix_db_url(_raw_db) if _raw_db
         else f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'net_platform.db')}"
@@ -24,19 +28,19 @@ class Config:
     MAX_CONTENT_LENGTH = 20 * 1024 * 1024
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
     ALLOWED_AUDIO_EXTENSIONS = {"mp3", "wav", "ogg", "m4a", "webm"}
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-    GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-    GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY", "")
-    ASSEMBLYAI_API_KEY = os.environ.get("ASSEMBLYAI_API_KEY", "")
+    OPENAI_API_KEY = _env("OPENAI_API_KEY")
+    GROQ_API_KEY = _env("GROQ_API_KEY")
+    GOOGLE_VISION_API_KEY = _env("GOOGLE_VISION_API_KEY")
+    ASSEMBLYAI_API_KEY = _env("ASSEMBLYAI_API_KEY")
 
 
     # Email / SMTP (optional — falls back to console in development)
-    MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
-    MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
-    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() in ("1", "true", "yes")
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
-    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "")
+    MAIL_SERVER = _env("MAIL_SERVER")
+    MAIL_PORT = int(_env("MAIL_PORT", "587"))
+    MAIL_USE_TLS = _env("MAIL_USE_TLS", "true").lower() in ("1", "true", "yes")
+    MAIL_USERNAME = _env("MAIL_USERNAME")
+    MAIL_PASSWORD = _env("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = _env("MAIL_DEFAULT_SENDER")
 
 class ProductionConfig(Config):
     DEBUG = False
