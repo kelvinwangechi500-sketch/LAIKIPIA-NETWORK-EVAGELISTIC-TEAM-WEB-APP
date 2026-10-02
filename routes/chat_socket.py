@@ -9,6 +9,7 @@ from extensions import db
 from models.chat_message import ChatMessage, MessageRead
 from models.user import User
 from datetime import datetime
+from utils.timezone import to_kenya_time
 
 # Track online users: {user_id: socket_id}
 online_users = {}
@@ -85,6 +86,7 @@ def register_socket_events(socketio):
         db.session.add(msg)
         db.session.commit()
 
+        kenya_created_at = to_kenya_time(msg.created_at)
         msg_data = {
             "id": msg.id,
             "room": room,
@@ -103,8 +105,9 @@ def register_socket_events(socketio):
             } if reply_to else None,
             "is_deleted": False,
             "read_count": 0,
-            "time": msg.created_at.strftime("%H:%M"),
-            "created_at": msg.created_at.isoformat(),
+            "time": kenya_created_at.strftime("%H:%M"),
+            "created_at": kenya_created_at.isoformat(),
+            "local_date": kenya_created_at.date().isoformat(),
         }
         emit("new_message", msg_data, room=room)
 

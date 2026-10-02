@@ -8,6 +8,7 @@ from extensions import db
 from models.user import User
 from models.chat_message import ChatMessage, MessageRead, ChatRoom
 from datetime import datetime
+from utils.timezone import to_kenya_time
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -59,7 +60,7 @@ def index():
             "name": room.name,
             "type": "group",
             "last_msg": last_msg.body[:50] if last_msg else "No messages yet",
-            "last_time": last_msg.created_at.strftime("%H:%M") if last_msg else "",
+            "last_time": to_kenya_time(last_msg.created_at).strftime("%H:%M") if last_msg else "",
             "unread": unread_count(room.room_id, current_user.id),
         })
 
@@ -83,7 +84,7 @@ def index():
                 "type": "dm",
                 "avatar": member.full_name[0].upper(),
                 "last_msg": last_msg.body[:50],
-                "last_time": last_msg.created_at.strftime("%H:%M"),
+                "last_time": to_kenya_time(last_msg.created_at).strftime("%H:%M"),
                 "unread": unread_count(rid, current_user.id),
                 "online": member.last_seen and (datetime.utcnow() - member.last_seen).seconds < 300,
             })
@@ -210,6 +211,7 @@ def mark_read(room_id):
 
 
 def _msg_dict(m):
+    kenya_created_at = to_kenya_time(m.created_at)
     reads = MessageRead.query.filter_by(message_id=m.id).count()
     return {
         "id": m.id,
@@ -229,6 +231,7 @@ def _msg_dict(m):
         } if m.reply_to else None,
         "is_deleted": m.is_deleted,
         "read_count": reads,
-        "created_at": m.created_at.isoformat(),
-        "time": m.created_at.strftime("%H:%M"),
+        "created_at": kenya_created_at.isoformat(),
+        "local_date": kenya_created_at.date().isoformat(),
+        "time": kenya_created_at.strftime("%H:%M"),
     }

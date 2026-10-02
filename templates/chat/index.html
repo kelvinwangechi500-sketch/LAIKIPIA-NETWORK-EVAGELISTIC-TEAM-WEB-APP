@@ -493,7 +493,7 @@ async function loadMessages(roomId) {
 
     let lastDate = null;
     msgs.forEach(msg => {
-      const msgDate = msg.created_at.split("T")[0];
+      const msgDate = msg.local_date || msg.created_at.split("T")[0];
       if (msgDate !== lastDate) {
         wrap.appendChild(createDateDivider(msgDate));
         lastDate = msgDate;
@@ -512,13 +512,17 @@ async function loadMessages(roomId) {
 function createDateDivider(dateStr) {
   const div = document.createElement("div");
   div.className = "date-divider";
-  const d = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  let label = d.toLocaleDateString("en-US", {day:"numeric",month:"long",year:"numeric"});
-  if (dateStr === today.toISOString().split("T")[0]) label = "Today";
-  else if (dateStr === yesterday.toISOString().split("T")[0]) label = "Yesterday";
+  const d = new Date(`${dateStr}T12:00:00Z`);
+  const kenyaDate = value => new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Nairobi", year: "numeric", month: "2-digit", day: "2-digit"
+  }).format(value);
+  const today = kenyaDate(new Date());
+  const yesterdayDate = new Date(`${today}T12:00:00Z`);
+  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+  const yesterday = kenyaDate(yesterdayDate);
+  let label = d.toLocaleDateString("en-US", {day:"numeric",month:"long",year:"numeric", timeZone:"Africa/Nairobi"});
+  if (dateStr === today) label = "Today";
+  else if (dateStr === yesterday) label = "Yesterday";
   div.innerHTML = `<span>${label}</span>`;
   return div;
 }

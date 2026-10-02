@@ -15,6 +15,7 @@ from models.announcement import Announcement
 from models.attendance import Attendance
 from models.user import User
 from datetime import datetime
+from utils.timezone import to_kenya_time
 
 api_bp = Blueprint("api", __name__)
 
@@ -149,6 +150,7 @@ def member_attendance(uid):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _msg_to_dict(m):
+    kenya_created_at = to_kenya_time(m.created_at)
     return {
         "id": m.id,
         "room": m.room,
@@ -156,7 +158,7 @@ def _msg_to_dict(m):
         "sender_id": m.sender_id,
         "sender_name": m.sender.full_name if m.sender else "Unknown",
         "client_id": m.client_id,
-        "created_at": m.created_at.isoformat(),
+        "created_at": kenya_created_at.isoformat(),
     }
 
 
