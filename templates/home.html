@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="LU NETWORK Evangelistic Team - Reaching the campus, transforming the regions.">
-<title>LU NETWORK Evangelistic Team | Every Student for Christ</title>
+<title>Network LU Unit App | Every Student for Christ</title>
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#B91C1C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LU Unit App">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
@@ -141,6 +146,10 @@
   <div class="page-width footer-bottom"><span>&copy; {{ 2026 }} LU NETWORK Evangelistic Team</span><span>Every student for Christ</span><a href="#top">Back to top &uarr;</a></div>
 </footer>
 <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
 const menuButton = document.querySelector('.menu-toggle');
 const navigation = document.querySelector('.site-nav');
 menuButton.addEventListener('click', () => {

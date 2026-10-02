@@ -5,6 +5,13 @@
  *          date defaults, general UI helpers
  */
 
+// ── Progressive Web App ─────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
 // ── Mobile Sidebar ──────────────────────────────────────────────────────────
 document.addEventListener('click', function(e) {
   const sidebar = document.getElementById('sidebar');
