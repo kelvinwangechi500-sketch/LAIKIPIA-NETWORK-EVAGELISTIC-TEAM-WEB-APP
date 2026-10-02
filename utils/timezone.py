@@ -1,8 +1,12 @@
-from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
-KENYA_TIMEZONE = ZoneInfo("Africa/Nairobi")
+try:
+    KENYA_TIMEZONE = ZoneInfo("Africa/Nairobi")
+except ZoneInfoNotFoundError:
+    # Keep local Windows deployments working when the optional tzdata package is absent.
+    KENYA_TIMEZONE = timezone(timedelta(hours=3), name="EAT")
 
 
 def to_kenya_time(value: datetime) -> datetime:

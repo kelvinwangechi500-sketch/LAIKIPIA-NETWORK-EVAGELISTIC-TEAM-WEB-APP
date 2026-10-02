@@ -129,6 +129,9 @@ def _migrate_db(app):
         ("users",         "email_verified", "BOOLEAN"),
         ("users",         "verification_token", "VARCHAR(64)"),
         ("users",         "verification_sent_at", "TIMESTAMP"),
+        ("meeting_minutes", "document_file", "VARCHAR(300)"),
+        ("meeting_minutes", "document_name", "VARCHAR(200)"),
+        ("meeting_minutes", "document_mime", "VARCHAR(120)"),
     ]
 
     with db.engine.connect() as conn:

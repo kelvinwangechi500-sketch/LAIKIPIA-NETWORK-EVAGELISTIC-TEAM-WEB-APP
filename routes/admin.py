@@ -1,6 +1,6 @@
 """Admin Routes — Full system control"""
 import json, io
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, Response, send_file
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, Response, send_file, send_from_directory
 from flask_login import login_required, current_user
 from extensions import db, bcrypt
 from utils.decorators import admin_required
@@ -225,8 +225,63 @@ def export_attendance(fmt):
 @login_required
 @admin_required
 def minutes():
-    all_minutes = MeetingMinutes.query.order_by(MeetingMinutes.meeting_date.desc()).all()
-    return render_template("admin/minutes.html", minutes=all_minutes)
+    date_filter = request.args.get("date", "").strip()
+    query = MeetingMinutes.query
+    selected_date = None
+    if date_filter:
+        try:
+            selected_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
+            query = query.filter(MeetingMinutes.meeting_date == selected_date)
+        except ValueError:
+            date_filter = ""
+    all_minutes = query.order_by(MeetingMinutes.meeting_date.desc()).all()
+    return render_template("admin/minutes.html", minutes=all_minutes, date_filter=date_filter)
+
+
+@admin_bp.route("/minutes/new", methods=["GET", "POST"])
+@login_required
+@admin_required
+def create_minutes():
+    if request.method == "POST":
+        meeting_date_str = request.form.get("meeting_date", "").strip()
+        title = request.form.get("title", "").strip()
+        try:
+            meeting_date = datetime.strptime(meeting_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Enter a valid meeting date.", "danger")
+            return render_template("shared/minutes_form.html", is_admin=True, today=date.today())
+        if not title:
+            flash("Meeting title is required.", "danger")
+            return render_template("shared/minutes_form.html", is_admin=True, today=meeting_date)
+
+        document = request.files.get("document")
+        document_data = (None, None, None)
+        if document and document.filename:
+            try:
+                from services.minutes_service import save_minutes_document
+                document_data = save_minutes_document(document, current_app.config["UPLOAD_FOLDER"])
+            except ValueError as exc:
+                flash(str(exc), "danger")
+                return render_template("shared/minutes_form.html", is_admin=True, today=meeting_date)
+
+        from services.minutes_service import action_points_json
+        m = MeetingMinutes(
+            meeting_date=meeting_date,
+            title=title,
+            summary=request.form.get("summary", "").strip(),
+            transcript=request.form.get("transcript", "").strip(),
+            action_points=action_points_json(request.form.get("action_points")),
+            document_file=document_data[0],
+            document_name=document_data[1],
+            document_mime=document_data[2],
+            recorded_by=current_user.id,
+        )
+        db.session.add(m)
+        db.session.commit()
+        _log("CREATE_MINUTES", f"Created minutes: {title} on {meeting_date}")
+        flash("Meeting minutes saved.", "success")
+        return redirect(url_for("admin.minutes", date=meeting_date.isoformat()))
+    return render_template("shared/minutes_form.html", is_admin=True, today=date.today())
 
 @admin_bp.route("/minutes/<int:mid>/edit", methods=["GET","POST"])
 @login_required
@@ -259,6 +314,18 @@ def delete_minutes(mid):
     db.session.commit()
     flash("Minutes deleted.", "info")
     return redirect(url_for("admin.minutes"))
+
+
+@admin_bp.route("/minutes/<int:mid>/document")
+@login_required
+@admin_required
+def download_minutes_document(mid):
+    m = MeetingMinutes.query.get_or_404(mid)
+    if not m.document_file:
+        flash("No uploaded document is attached to these minutes.", "warning")
+        return redirect(url_for("admin.minutes"))
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], m.document_file,
+                               as_attachment=True, download_name=m.document_name or m.document_file)
 
 @admin_bp.route("/minutes/<int:mid>/export/<fmt>")
 @login_required

@@ -1,6 +1,6 @@
 """Vice Secretary Routes - Attendance, OCR, Meeting Recording"""
 import os, json, uuid
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, Response, send_from_directory
 from flask_login import login_required, current_user
 from utils.decorators import vs_required
 from extensions import db, bcrypt
@@ -192,8 +192,61 @@ def manual_attendance():
 @login_required
 @vs_required
 def minutes():
-    all_minutes = MeetingMinutes.query.order_by(MeetingMinutes.meeting_date.desc()).all()
-    return render_template("vice_secretary/minutes.html", minutes=all_minutes)
+    date_filter = request.args.get("date", "").strip()
+    query = MeetingMinutes.query
+    if date_filter:
+        try:
+            query = query.filter(MeetingMinutes.meeting_date == datetime.strptime(date_filter, "%Y-%m-%d").date())
+        except ValueError:
+            date_filter = ""
+    all_minutes = query.order_by(MeetingMinutes.meeting_date.desc()).all()
+    return render_template("vice_secretary/minutes.html", minutes=all_minutes, date_filter=date_filter)
+
+
+@vs_bp.route("/minutes/new", methods=["GET", "POST"])
+@login_required
+@vs_required
+def create_minutes():
+    if request.method == "POST":
+        meeting_date_str = request.form.get("meeting_date", "").strip()
+        title = request.form.get("title", "").strip()
+        try:
+            meeting_date = datetime.strptime(meeting_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Enter a valid meeting date.", "danger")
+            return render_template("shared/minutes_form.html", is_admin=False, today=date.today())
+        if not title:
+            flash("Meeting title is required.", "danger")
+            return render_template("shared/minutes_form.html", is_admin=False, today=meeting_date)
+
+        document = request.files.get("document")
+        document_data = (None, None, None)
+        if document and document.filename:
+            try:
+                from services.minutes_service import save_minutes_document
+                document_data = save_minutes_document(document, current_app.config["UPLOAD_FOLDER"])
+            except ValueError as exc:
+                flash(str(exc), "danger")
+                return render_template("shared/minutes_form.html", is_admin=False, today=meeting_date)
+
+        from services.minutes_service import action_points_json
+        m = MeetingMinutes(
+            meeting_date=meeting_date,
+            title=title,
+            summary=request.form.get("summary", "").strip(),
+            transcript=request.form.get("transcript", "").strip(),
+            action_points=action_points_json(request.form.get("action_points")),
+            document_file=document_data[0],
+            document_name=document_data[1],
+            document_mime=document_data[2],
+            recorded_by=current_user.id,
+        )
+        db.session.add(m)
+        db.session.commit()
+        _log("CREATE_MINUTES", f"Created minutes: {title} on {meeting_date}")
+        flash("Meeting minutes saved.", "success")
+        return redirect(url_for("vs.minutes", date=meeting_date.isoformat()))
+    return render_template("shared/minutes_form.html", is_admin=False, today=date.today())
 
 @vs_bp.route("/minutes/<int:mid>/edit", methods=["GET","POST"])
 @login_required
@@ -223,6 +276,19 @@ def edit_minutes(mid):
 def export_minutes(mid, fmt):
     from routes.admin import export_minutes as admin_export
     return admin_export(mid, fmt)
+
+
+@vs_bp.route("/minutes/<int:mid>/document")
+@login_required
+@vs_required
+def download_minutes_document(mid):
+    from models.meeting_minutes import MeetingMinutes
+    m = MeetingMinutes.query.get_or_404(mid)
+    if not m.document_file:
+        flash("No uploaded document is attached to these minutes.", "warning")
+        return redirect(url_for("vs.minutes"))
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], m.document_file,
+                               as_attachment=True, download_name=m.document_name or m.document_file)
 
 # ── Attendance Export ─────────────────────────────────────────────────────────
 @vs_bp.route("/attendance/export/<fmt>")

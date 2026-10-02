@@ -11,14 +11,23 @@
     <div class="topbar">
       <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
       <div class="topbar-title">📝 Meeting Minutes</div>
-      <div class="topbar-actions"><a href="{{ url_for('vs.record_meeting') }}" class="btn btn-primary btn-sm">🎙️ Record New</a></div>
+      <div class="topbar-actions"><a href="{{ url_for('vs.create_minutes') }}" class="btn btn-primary btn-sm">➕ Add Minutes</a><a href="{{ url_for('vs.record_meeting') }}" class="btn btn-grey btn-sm">🎙️ Record</a></div>
     </div>
     <div class="content-body">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
       {% endwith %}
-      {% for m in minutes %}
       <div class="card" style="margin-bottom:18px">
+        <div class="card-body" style="padding:14px 18px">
+          <form method="GET" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:5px">Filter by meeting date</label><input type="date" name="date" value="{{ date_filter }}" class="form-control" style="margin:0"></div>
+            <button type="submit" class="btn btn-primary">🔎 Filter</button>
+            {% if date_filter %}<a href="{{ url_for('vs.minutes') }}" class="btn btn-grey">Clear</a>{% endif %}
+          </form>
+        </div>
+      </div>
+      {% for m in minutes %}
+      <div class="card" id="minutes-{{ m.id }}" style="margin-bottom:18px">
         <div class="card-header">
           <div><h3>📝 {{ m.title }}</h3><span style="font-size:12px;color:var(--grey-400)">{{ m.meeting_date.strftime('%d %B %Y') }}</span></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -26,6 +35,8 @@
             <a href="{{ url_for('vs.export_minutes', mid=m.id, fmt='pdf') }}" class="btn btn-sm btn-grey">⬇ PDF</a>
             <a href="{{ url_for('vs.export_minutes', mid=m.id, fmt='docx') }}" class="btn btn-sm btn-grey">⬇ DOCX</a>
             <a href="{{ url_for('vs.export_minutes', mid=m.id, fmt='txt') }}" class="btn btn-sm btn-grey">⬇ TXT</a>
+            {% if m.document_file %}<a href="{{ url_for('vs.download_minutes_document', mid=m.id) }}" class="btn btn-sm btn-grey">📎 File</a>{% endif %}
+            <button type="button" class="btn btn-sm btn-outline" onclick="shareMinutes('{{ url_for('vs.minutes', _external=True) }}#minutes-{{ m.id }}', '{{ m.title|e }}')">↗ Share</button>
           </div>
         </div>
         <div class="card-body">
@@ -37,5 +48,12 @@
     </div>
   </div>
 </div>
+<script>
+async function shareMinutes(url, title) {
+  if (navigator.share) { await navigator.share({title: title, text: 'Meeting minutes: ' + title, url: url}); return; }
+  await navigator.clipboard.writeText(url);
+  alert('Minutes link copied. Share it with an authorized user.');
+}
+</script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body></html>
