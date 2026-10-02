@@ -38,23 +38,6 @@ def create_app():
     login_manager.login_message = "Please log in to continue."
     login_manager.login_message_category = "warning"
 
-    @app.before_request
-    def enforce_email_verification():
-        """Block unverified users from protected areas."""
-        from flask_login import current_user
-        from flask import request, redirect, url_for
-        if not current_user.is_authenticated:
-            return
-        if getattr(current_user, "email_verified", True):
-            return
-        # Allow auth endpoints and static files
-        endpoint = request.endpoint or ""
-        if endpoint.startswith("auth.") or endpoint == "static":
-            return
-        if endpoint in ("service_worker", "manifest"):
-            return
-        return redirect(url_for("auth.unverified"))
-
     from routes.auth import auth_bp
     from routes.admin import admin_bp
     from routes.member import member_bp

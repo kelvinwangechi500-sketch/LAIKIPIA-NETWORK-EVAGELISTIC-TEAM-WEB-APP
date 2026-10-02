@@ -47,14 +47,11 @@ def vs_required(f):
 
 
 def verified_required(f):
-    """Require that the user's email has been verified."""
+    """Legacy compatibility decorator; account access does not require email verification."""
     @wraps(f)
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated:
             flash("Please log in to continue.", "warning")
             return redirect(url_for("auth.login"))
-        if not getattr(current_user, "email_verified", True):
-            flash("Please verify your email address to continue.", "warning")
-            return redirect(url_for("auth.unverified"))
         return f(*args, **kwargs)
     return decorated

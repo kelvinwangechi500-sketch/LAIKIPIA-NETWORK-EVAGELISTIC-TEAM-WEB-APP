@@ -45,8 +45,6 @@ def smtp_is_ready() -> bool:
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        if not current_user.email_verified:
-            return redirect(url_for("auth.unverified"))
         return _role_redirect(current_user.role)
 
     if request.method == "POST":
@@ -55,12 +53,6 @@ def login():
 
         user = User.query.filter_by(email=email, is_active=True).first()
         if user and bcrypt.check_password_hash(user.password_hash, password):
-            smtp_ready = smtp_is_ready()
-            if not user.email_verified and smtp_ready:
-                login_user(user)  # temporary session so they can resend
-                flash("Please verify your email before continuing.", "warning")
-                return redirect(url_for("auth.unverified"))
-
             if not user.email_verified:
                 user.email_verified = True
                 user.verification_token = None
@@ -130,11 +122,6 @@ def register():
             for e in errors:
                 flash(e, "danger")
         else:
-            smtp_ready = smtp_is_ready()
-            # Admin-created accounts are auto-verified.
-            # If SMTP is not configured, auto-verify self-registered users too so the app keeps working.
-            auto_verify = is_admin or not smtp_ready
-
             new_user = User(
                 full_name=full_name,
                 email=email,
@@ -145,7 +132,7 @@ def register():
                 year=year or None,
                 branch_id=int(branch_id) if branch_id else None,
                 is_active=True,
-                email_verified=auto_verify,
+                email_verified=True,
             )
             db.session.add(new_user)
             db.session.commit()
@@ -154,25 +141,7 @@ def register():
                 flash(f"Account created for {full_name} ({role}).", "success")
                 return redirect(url_for("admin.members"))
 
-            if smtp_ready:
-                # Self-registration → send verification email
-                sent = send_verification_email(new_user)
-                if sent:
-                    flash(
-                        "Account created! Check your email for a verification link.",
-                        "success",
-                    )
-                else:
-                    flash(
-                        "Account created, but we could not send the verification email. "
-                        "Please use Resend on the next page.",
-                        "warning",
-                    )
-            else:
-                flash(
-                    "Account created successfully. Email verification is disabled on this deployment.",
-                    "success",
-                )
+            flash("Account created successfully. You can sign in now.", "success")
             return redirect(url_for("auth.login"))
 
     return render_template(
