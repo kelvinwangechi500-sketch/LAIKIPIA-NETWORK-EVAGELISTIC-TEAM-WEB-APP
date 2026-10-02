@@ -11,13 +11,14 @@
 /* ── Reset & Base ── */
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#111b21;height:100vh;overflow:hidden;color:#e9edef}
+button,input,textarea{font:inherit}
 
 /* ── Layout ── */
 .app{display:flex;height:100vh;width:100vw}
 
 /* ── Left Panel ── */
 .left-panel{width:400px;min-width:400px;border-right:1px solid #2a3942;display:flex;flex-direction:column;background:#111b21;height:100vh}
-@media(max-width:768px){.left-panel{width:100%;min-width:100%}.right-panel{display:none}.right-panel.active{display:flex;position:fixed;inset:0;z-index:100}}
+@media(max-width:768px){.left-panel{width:100%;min-width:100%}.right-panel{display:none}.right-panel.active{display:flex;position:fixed;inset:0;z-index:100}.panel-header{padding-left:12px;padding-right:12px}.messages-wrap{padding-left:8px;padding-right:8px}.msg-row{max-width:88%}.input-area{padding:8px}.msg-input{min-width:0;font-size:16px}.emoji-btn,.attach-btn{padding:7px}.send-btn{width:44px;height:44px}.emoji-picker{left:8px;right:8px;bottom:72px;max-width:none}}
 
 /* ── Header ── */
 .panel-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#202c33;height:60px;flex-shrink:0}

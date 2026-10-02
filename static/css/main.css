@@ -223,6 +223,59 @@ textarea.form-control{resize:vertical;min-height:90px}
   .send-b{width:40px;height:40px;font-size:17px}
   .cl-item{padding:8px 12px}
 }
+
+/* ── PHONE LAYOUT ───────────────────────────────── */
+@media(max-width:768px){
+  body{overflow-x:hidden}
+  .sidebar{width:min(286px,88vw);box-shadow:10px 0 30px rgba(0,0,0,.25)}
+  .topbar{height:56px;padding:0 14px;gap:10px}
+  .topbar-title{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topbar-actions{gap:4px;min-width:0}
+  .topbar-actions>span{display:none}
+  .content-body{padding:16px}
+  .card{margin-bottom:14px;border-radius:8px}
+  .card-header{align-items:flex-start;gap:10px;flex-wrap:wrap;padding:13px 15px}
+  .card-header h3{font-size:14px;line-height:1.35}
+  .card-body{padding:15px}
+  .stats-grid{gap:10px;margin-bottom:16px}
+  .stat-card{padding:14px 12px;gap:10px}
+  .stat-icon{width:42px;height:42px;font-size:18px}
+  .stat-info .val{font-size:21px}
+  .grid-2,.grid-3{gap:12px}
+  .btn{min-height:42px;justify-content:center}
+  .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .data-table{min-width:620px}
+  .upload-zone{padding:28px 16px}
+  .recording-controls{gap:12px;padding:14px}
+  .modal{width:calc(100% - 24px);padding:18px;max-height:calc(100vh - 24px)}
+  .chat-wrap{height:calc(100dvh - 120px);min-height:360px;border-radius:8px}
+  .chat-sidebar{width:180px}
+  .chat-input-area{padding:9px 10px;gap:7px}
+  .chat-input{min-width:0;padding:10px 12px;font-size:16px}
+}
+@media(max-width:480px){
+  .content-body{padding:12px}
+  .section-title{font-size:17px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .stat-card{min-width:0;align-items:flex-start}
+  .stat-info .val{font-size:19px}
+  .stat-info .lbl{font-size:10px}
+  .card-header .btn,.card-header .btn-group{width:100%}
+  .search-bar{gap:8px}
+  .search-bar input,.search-bar select{width:100%!important;min-width:0!important}
+  .action-btns{width:100%;justify-content:stretch!important}
+  .action-btns .btn{flex:1}
+  .form-group{margin-bottom:13px}
+  .grid-2{grid-template-columns:1fr}
+  .chat-wrap{height:calc(100dvh - 90px);margin:0 -12px;border-radius:0;border-left:0;border-right:0}
+  .chat-sidebar{display:none}
+  .chat-main{min-width:0}
+  .chat-hdr{padding:12px 14px}
+  .chat-messages{padding:12px 8px}
+  .msg-bubble{max-width:88%;font-size:14px}
+  .offline-bar{padding:8px 10px;font-size:12px}
+  .upload-zone .uz-icon{font-size:30px}
+}
 /* ── V2 Additions ── */
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 @media (max-width: 768px) { .grid-3 { grid-template-columns: 1fr; } }
