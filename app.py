@@ -42,6 +42,7 @@ def create_app():
     from routes.admin import admin_bp
     from routes.member import member_bp
     from routes.vice_secretary import vs_bp
+    from routes.treasurer import treasurer_bp
     from routes.api import api_bp
     from routes.chat import chat_bp
 
@@ -49,6 +50,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(member_bp, url_prefix="/member")
     app.register_blueprint(vs_bp, url_prefix="/vs")
+    app.register_blueprint(treasurer_bp, url_prefix="/treasurer")
     app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(chat_bp, url_prefix="/chat")
 
@@ -132,6 +134,13 @@ def _migrate_db(app):
         ("meeting_minutes", "document_file", "VARCHAR(300)"),
         ("meeting_minutes", "document_name", "VARCHAR(200)"),
         ("meeting_minutes", "document_mime", "VARCHAR(120)"),
+        ("finance_transactions", "income_type", "VARCHAR(40) DEFAULT 'Other'"),
+        ("finance_transactions", "reference_number", "VARCHAR(100)"),
+        ("finance_transactions", "notes", "TEXT"),
+        ("finance_transactions", "receipt_file", "VARCHAR(300)"),
+        ("finance_transactions", "receipt_name", "VARCHAR(200)"),
+        ("finance_transactions", "receipt_mime", "VARCHAR(120)"),
+        ("finance_obligations", "obligation_type", "VARCHAR(30) DEFAULT 'Commitment'"),
     ]
 
     with db.engine.connect() as conn:

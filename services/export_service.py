@@ -183,3 +183,100 @@ def _attendance_pdf(records) -> bytes:
         return buffer.read()
     except Exception as e:
         return f"PDF error: {e}".encode()
+
+
+def export_finance_pdf(title, opening_balance, income, expenses, closing_balance, transactions, budgets=None, obligations=None, assets=None) -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), topMargin=1.2 * cm, bottomMargin=1.2 * cm)
+    styles = getSampleStyleSheet()
+    story = [Paragraph("Network Evangelistic Team", styles["Title"]), Paragraph(title, styles["Heading2"])]
+    summary = [["Opening balance", "Approved income", "Approved expenses", "Closing balance"],
+               [f"KES {opening_balance:,.2f}", f"KES {income:,.2f}", f"KES {expenses:,.2f}", f"KES {closing_balance:,.2f}"]]
+    summary_table = Table(summary, colWidths=[6 * cm] * 4)
+    summary_table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#B91C1C")),
+                                       ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                                       ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                                       ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
+                                       ("ALIGN", (0, 0), (-1, -1), "CENTER")]))
+    story.extend([summary_table, Spacer(1, 0.4 * cm)])
+    rows = [["Date", "Type", "Income type", "Category", "Description", "Reference", "Payment", "Amount (KES)"]]
+    for item in transactions:
+        rows.append([str(item.transaction_date), item.transaction_type.title(), item.income_type or "Other",
+                     item.category, item.description, item.reference_number or "", item.payment_method or "",
+                     f"{item.amount:,.2f}"])
+    table = Table(rows, repeatRows=1)
+    table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#7F1D1D")),
+                               ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                               ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                               ("FONTSIZE", (0, 0), (-1, -1), 7),
+                               ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#D1D5DB")),
+                               ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#FEF2F2")])]))
+    story.append(table)
+    if obligations:
+        story.extend([Spacer(1, 0.4 * cm), Paragraph("Outstanding obligations", styles["Heading3"]),
+                      Paragraph("; ".join(f"{o.description}: KES {o.amount:,.2f}" for o in obligations), styles["Normal"])])
+    if assets:
+        story.extend([Spacer(1, 0.4 * cm), Paragraph("Assets", styles["Heading3"]),
+                      Paragraph("; ".join(f"{a.name}: KES {a.purchase_amount:,.2f}" for a in assets), styles["Normal"])])
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.read()
+
+
+def export_finance_excel(title, opening_balance, income, expenses, closing_balance, transactions, budgets=None, obligations=None, assets=None) -> bytes:
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Transactions"
+    sheet.append([title])
+    sheet.append(["Opening balance", "Approved income", "Approved expenses", "Closing balance"])
+    sheet.append([float(opening_balance), float(income), float(expenses), float(closing_balance)])
+    sheet.append([])
+    headers = ["Date", "Type", "Income type", "Category", "Description", "Reference", "Payment method", "Amount (KES)"]
+    sheet.append(headers)
+    for cell in sheet[1] + sheet[2] + sheet[5]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="B91C1C")
+    for item in transactions:
+        sheet.append([str(item.transaction_date), item.transaction_type, item.income_type or "Other", item.category,
+                      item.description, item.reference_number or "", item.payment_method or "", float(item.amount)])
+    if budgets:
+        budget_sheet = workbook.create_sheet("Budget vs Actual")
+        budget_sheet.append(["Semester", "Category", "Budget (KES)", "Actual (KES)", "Remaining (KES)"])
+        for budget in budgets:
+            actual = sum((item.amount for item in transactions if item.transaction_type == "expense" and item.category == budget.category and item.semester == budget.semester), 0)
+            budget_sheet.append([budget.semester, budget.category, float(budget.amount), float(actual), float(budget.amount - actual)])
+        if title.startswith("Annual"):
+            summary_sheet = workbook.create_sheet("Semester Summary")
+            summary_sheet.append(["Semester", "Income (KES)", "Expenses (KES)", "Net (KES)"])
+            for semester in ("Semester 1", "Semester 2"):
+                semester_rows = [item for item in transactions if item.semester == semester]
+                semester_income = sum((item.amount for item in semester_rows if item.transaction_type == "income"), 0)
+                semester_expenses = sum((item.amount for item in semester_rows if item.transaction_type == "expense"), 0)
+                summary_sheet.append([semester, float(semester_income), float(semester_expenses), float(semester_income - semester_expenses)])
+    if obligations:
+        obligation_sheet = workbook.create_sheet("Obligations")
+        obligation_sheet.append(["Description", "Category", "Amount (KES)", "Due date", "Status", "Reference"])
+        for item in obligations:
+            obligation_sheet.append([item.description, item.category, float(item.amount), str(item.due_date or ""), item.status, item.reference_number or ""])
+    if assets:
+        asset_sheet = workbook.create_sheet("Assets")
+        asset_sheet.append(["Name", "Category", "Purchase amount (KES)", "Purchase date", "Condition", "Location"])
+        for item in assets:
+            asset_sheet.append([item.name, item.category, float(item.purchase_amount), str(item.purchase_date), item.condition, item.location or ""])
+    for sheet in workbook.worksheets:
+        for column in sheet.columns:
+            width = max(len(str(cell.value or "")) for cell in column) + 2
+            sheet.column_dimensions[column[0].column_letter].width = min(width, 36)
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    return buffer.read()

@@ -1,0 +1,127 @@
+{% from 'shared/sidebar.html' import sidebar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treasurer Dashboard - NET Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  {{ sidebar('dashboard', 'treasurer', current_user) }}
+  <div class="main-content">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <div class="topbar-title">Treasurer Dashboard</div>
+      <div class="topbar-actions"><span style="font-size:13px;color:var(--grey-400)">KES financial workspace</span></div>
+    </div>
+    <div class="content-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div class="search-bar" style="justify-content:space-between">
+        <form method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label for="semester" style="font-weight:600">Reporting period</label>
+          <select id="semester" name="semester" class="form-control" style="width:auto;margin:0">
+            {% for option in semesters %}<option value="{{ option }}" {% if option == semester %}selected{% endif %}>{{ option }}</option>{% endfor %}
+          </select>
+          <input name="year" type="number" class="form-control" value="{{ year }}" min="2000" max="2100" style="width:110px;margin:0">
+          <button class="btn btn-outline" type="submit">View Period</button>
+        </form>
+        <a href="{{ url_for('treasurer.report', semester=semester, year=year) }}" class="btn btn-primary">Prepare Report</a>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">KES</div><div class="stat-info"><div class="val">{{ '{:,.2f}'.format(total_income) }}</div><div class="lbl">Approved Income</div></div></div>
+        <div class="stat-card"><div class="stat-icon">-</div><div class="stat-info"><div class="val">{{ '{:,.2f}'.format(total_expenses) }}</div><div class="lbl">Approved Expenses</div></div></div>
+        <div class="stat-card"><div class="stat-icon">=</div><div class="stat-info"><div class="val">{{ '{:,.2f}'.format(balance) }}</div><div class="lbl">Period Balance</div></div></div>
+        <div class="stat-card"><div class="stat-icon">!</div><div class="stat-info"><div class="val">{{ pending_count }}</div><div class="lbl">Awaiting Admin Approval</div></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>Record a transaction</h3><span class="pill pill-blue">KES</span></div>
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('treasurer.create_transaction') }}" enctype="multipart/form-data">
+              <div class="grid-2">
+                <div class="form-group"><label>Type *</label><select name="transaction_type" class="form-control" required><option value="expense">Expense</option><option value="income">Income</option></select></div>
+                <div class="form-group"><label>Amount (KES) *</label><input name="amount" type="number" min="0.01" step="0.01" class="form-control" required></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Category *</label><select name="category" class="form-control" required><option value="">Choose category</option>{% for category in categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Date *</label><input name="transaction_date" type="date" class="form-control" value="{{ today }}" required></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Income type</label><select name="income_type" class="form-control">{% for income_type in income_types %}<option value="{{ income_type }}">{{ income_type }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Reference number</label><input name="reference_number" class="form-control" placeholder="Receipt, M-Pesa, or bank reference"></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Semester *</label><select name="semester" class="form-control" required>{% for option in semesters %}<option value="{{ option }}" {% if option == semester %}selected{% endif %}>{{ option }} {{ year }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Payment method</label><select name="payment_method" class="form-control">{% for method in payment_methods %}<option>{{ method }}</option>{% endfor %}</select></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Receipt or invoice</label><input name="receipt" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"></div>
+                <div class="form-group"><label>Notes</label><input name="notes" class="form-control" placeholder="Optional details"></div>
+              </div>
+              <div class="form-group"><label>Description *</label><textarea name="description" class="form-control" rows="3" required placeholder="What was received or spent, and why?"></textarea></div>
+              <button class="btn btn-primary" type="submit" style="width:100%">Submit for Admin Approval</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Recent period activity</h3><span class="badge">{{ semester }} {{ year }}</span></div>
+          <div class="table-wrap">
+            <table class="data-table"><thead><tr><th>Date</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+            {% for item in transactions %}
+            <tr><td>{{ item.transaction_date.strftime('%d %b') }}</td><td><strong>{{ item.category }}</strong><br><small>{{ item.description[:45] }}</small></td><td>{{ 'KES {:,.2f}'.format(item.amount) }}</td><td><span class="pill {% if item.status == 'approved' %}pill-green{% elif item.status == 'rejected' %}pill-red{% else %}pill-yellow{% endif %}">{{ item.status|title }}</span></td></tr>
+            {% else %}<tr><td colspan="4" class="empty-state">No transactions for this period.</td></tr>{% endfor %}
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>Semester budget</h3><span class="pill pill-blue">Planned vs actual</span></div>
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('treasurer.create_budget') }}">
+              <div class="grid-2"><div class="form-group"><label>Category</label><select name="category" class="form-control" required>{% for category in categories %}<option>{{ category }}</option>{% endfor %}</select></div><div class="form-group"><label>Limit (KES)</label><input name="amount" type="number" min="0.01" step="0.01" class="form-control" required></div></div>
+              <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="semester" value="{{ semester }}">
+              <div class="form-group"><label>Notes</label><input name="notes" class="form-control"></div><button class="btn btn-outline" type="submit">Save category limit</button>
+            </form>
+            <div class="table-wrap" style="margin-top:14px"><table class="data-table"><thead><tr><th>Category</th><th>Budget</th><th>Actual</th><th>Remaining</th></tr></thead><tbody>{% for budget in budgets %}{% set actual = actual_by_category.get(budget.category, 0) %}<tr><td>{{ budget.category }}</td><td>KES {{ '{:,.2f}'.format(budget.amount) }}</td><td>KES {{ '{:,.2f}'.format(actual) }}</td><td>KES {{ '{:,.2f}'.format(budget.amount - actual) }}{% if actual > budget.amount %} <span class="pill pill-red">Overspent</span>{% endif %}</td></tr>{% else %}<tr><td colspan="4" class="empty-state">No budget limits yet.</td></tr>{% endfor %}</tbody></table></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Unpaid obligations</h3><span class="pill pill-yellow">Outstanding</span></div>
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('treasurer.create_obligation') }}">
+              <div class="grid-2"><div class="form-group"><label>Description</label><input name="description" class="form-control" required></div><div class="form-group"><label>Type</label><select name="obligation_type" class="form-control">{% for obligation_type in obligation_types %}<option>{{ obligation_type }}</option>{% endfor %}</select></div></div>
+              <div class="grid-2"><div class="form-group"><label>Amount (KES)</label><input name="amount" type="number" min="0.01" step="0.01" class="form-control" required></div><div class="form-group"><label>Due date</label><input name="due_date" type="date" class="form-control"></div></div>
+              <div class="grid-2"><div class="form-group"><label>Category</label><select name="category" class="form-control" required>{% for category in categories %}<option>{{ category }}</option>{% endfor %}</select></div><div class="form-group"><label>Reference</label><input name="reference_number" class="form-control"></div></div>
+              <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="semester" value="{{ semester }}"><button class="btn btn-outline" type="submit">Record obligation</button>
+            </form>
+            <div class="table-wrap" style="margin-top:14px"><table class="data-table"><thead><tr><th>Details</th><th>Amount</th><th>Due</th><th>Action</th></tr></thead><tbody>{% for item in obligations %}<tr><td>{{ item.obligation_type }}<br>{{ item.description }}</td><td>KES {{ '{:,.2f}'.format(item.amount) }}</td><td>{{ item.due_date or 'Not set' }}</td><td><form method="POST" action="{{ url_for('treasurer.mark_obligation_paid', obligation_id=item.id) }}"><button class="btn btn-sm btn-grey">Mark paid</button></form></td></tr>{% else %}<tr><td colspan="4" class="empty-state">No outstanding obligations.</td></tr>{% endfor %}</tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-header"><h3>Record an asset</h3><span class="pill pill-blue">Equipment and property</span></div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('treasurer.create_asset') }}">
+            <div class="grid-2"><div class="form-group"><label>Asset name</label><input name="name" class="form-control" required></div><div class="form-group"><label>Purchase amount (KES)</label><input name="purchase_amount" type="number" min="0.01" step="0.01" class="form-control" required></div></div>
+            <div class="grid-2"><div class="form-group"><label>Category</label><select name="category" class="form-control" required>{% for category in categories %}<option>{{ category }}</option>{% endfor %}</select></div><div class="form-group"><label>Purchase date</label><input name="purchase_date" type="date" class="form-control" value="{{ today }}" required></div></div>
+            <div class="grid-2"><div class="form-group"><label>Condition</label><select name="condition" class="form-control"><option>Good</option><option>New</option><option>Needs repair</option><option>Disposed</option></select></div><div class="form-group"><label>Location</label><input name="location" class="form-control"></div></div>
+            <button class="btn btn-outline" type="submit">Save asset</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>

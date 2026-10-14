@@ -32,6 +32,7 @@
                   <select name="role" class="form-control">
                     <option value="member" {% if user.role=='member' %}selected{% endif %}>Member</option>
                     <option value="vice_secretary" {% if user.role=='vice_secretary' %}selected{% endif %}>Vice Secretary</option>
+                    <option value="treasurer" {% if user.role=='treasurer' %}selected{% endif %}>Treasurer</option>
                     <option value="admin" {% if user.role=='admin' %}selected{% endif %}>Admin</option>
                   </select>
                 </div>

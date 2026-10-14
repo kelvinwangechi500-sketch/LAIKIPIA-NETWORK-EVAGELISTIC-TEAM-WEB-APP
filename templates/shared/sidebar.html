@@ -13,6 +13,8 @@
     <a href="{{ url_for('admin.attendance') }}" class="nav-item {{ 'active' if active_page=='attendance' }}"><span class="nav-icon">📋</span> Attendance</a>
     <a href="{{ url_for('admin.minutes') }}" class="nav-item {{ 'active' if active_page=='minutes' }}"><span class="nav-icon">📝</span> Meeting Minutes</a>
     <a href="{{ url_for('admin.branches') }}" class="nav-item {{ 'active' if active_page=='branches' }}"><span class="nav-icon">🌿</span> Branches</a>
+    <a href="{{ url_for('treasurer.admin_finance') }}" class="nav-item {{ 'active' if active_page=='finance' }}"><span class="nav-icon">💰</span> Financial Approvals</a>
+    <a href="{{ url_for('treasurer.annual_report') }}" class="nav-item {{ 'active' if active_page=='annual' }}"><span class="nav-icon">📊</span> Annual Finance Report</a>
     <a href="{{ url_for('chat.index') }}" class="nav-item {{ 'active' if active_page=='chat_wa' }}"><span class="nav-icon">💬</span> Team Chat</a>
     <a href="{{ url_for('admin.audit_logs') }}" class="nav-item {{ 'active' if active_page=='audit' }}"><span class="nav-icon">🔍</span> Audit Logs</a>
     <div class="nav-section-label">Account</div>
@@ -24,6 +26,12 @@
     <a href="{{ url_for('vs.manual_attendance') }}" class="nav-item {{ 'active' if active_page=='manual' }}"><span class="nav-icon">✏️</span> Manual Attendance</a>
     <a href="{{ url_for('vs.minutes') }}" class="nav-item {{ 'active' if active_page=='minutes' }}"><span class="nav-icon">📝</span> Meeting Minutes</a>
     <a href="{{ url_for('vs.record_meeting') }}" class="nav-item {{ 'active' if active_page=='record' }}"><span class="nav-icon">🎙️</span> Record Meeting</a>
+    <a href="{{ url_for('chat.index') }}" class="nav-item {{ 'active' if active_page=='chat_wa' }}"><span class="nav-icon">💬</span> Team Chat</a>
+    {%- elif role == 'treasurer' %}
+    <div class="nav-section-label">Treasurer</div>
+    <a href="{{ url_for('treasurer.dashboard') }}" class="nav-item {{ 'active' if active_page=='dashboard' }}"><span class="nav-icon">💰</span> Finance Dashboard</a>
+    <a href="{{ url_for('treasurer.report') }}" class="nav-item {{ 'active' if active_page=='report' }}"><span class="nav-icon">📊</span> Semester Report</a>
+    <a href="{{ url_for('treasurer.annual_report') }}" class="nav-item {{ 'active' if active_page=='annual' }}"><span class="nav-icon">📅</span> Annual Report</a>
     <a href="{{ url_for('chat.index') }}" class="nav-item {{ 'active' if active_page=='chat_wa' }}"><span class="nav-icon">💬</span> Team Chat</a>
     {%- else %}
     <div class="nav-section-label">Member Portal</div>

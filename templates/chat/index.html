@@ -190,7 +190,7 @@ button,input,textarea{font:inherit}
       <span class="header-title">NET Chats</span>
       <div class="header-actions">
         <button class="icon-btn" onclick="showNewDM()" title="New Chat">✏️</button>
-        <button class="icon-btn" onclick="window.location='/member/dashboard'" title="Dashboard">🏠</button>
+        <a class="icon-btn" href="{{ dashboard_url }}" title="Dashboard" aria-label="Dashboard">🏠</a>
         <button class="icon-btn" onclick="window.location='/auth/logout'" title="Logout">⏻</button>
       </div>
     </div>

@@ -70,6 +70,10 @@
           <div class="num" style="color:#1e40af">{{ members|selectattr('role','eq','vice_secretary')|list|length }}</div>
           <div class="lbl">Vice Secretaries</div>
         </div>
+        <div class="stat-mini">
+          <div class="num" style="color:#92400e">{{ members|selectattr('role','eq','treasurer')|list|length }}</div>
+          <div class="lbl">Treasurers</div>
+        </div>
       </div>
 
       <!-- Search -->
@@ -80,6 +84,7 @@
           <option value="">All Roles</option>
           <option value="admin">Admin</option>
           <option value="vice_secretary">Vice Secretary</option>
+          <option value="treasurer">Treasurer</option>
           <option value="member">Member</option>
         </select>
       </div>
@@ -130,6 +135,7 @@
                   <span class="role-badge role-{{ m.role }}">
                     {% if m.role == 'admin' %}🔴 Admin
                     {% elif m.role == 'vice_secretary' %}🔵 Vice Sec
+                    {% elif m.role == 'treasurer' %}🟠 Treasurer
                     {% else %}🟢 Member{% endif %}
                   </span>
                 </td>

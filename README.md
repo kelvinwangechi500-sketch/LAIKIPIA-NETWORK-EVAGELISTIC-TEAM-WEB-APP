@@ -15,8 +15,11 @@ A Flask web app for managing members, attendance, meeting minutes, announcements
 | **Attendance** | Manual entry, image upload + OCR, exports |
 | **Meetings** | Manual minutes, document uploads, date filtering, exports, sharing, and optional AI transcription |
 | **Chat** | Real-time group rooms (Socket.IO), file sharing |
+| **Finance** | KES transactions, receipts, admin approval, semester budgets, obligations, assets, semester and annual reports |
 | **Security** | RBAC decorators, audit logs |
 | **Exports** | PDF, DOCX, Excel |
+
+The role inventory includes Admin, Vice Secretary, Treasurer, and Member.
 
 ---
 
@@ -110,7 +113,7 @@ Default admin (seeded on first run):
 ### 7. Self-registration
 
 1. Open **Register** on the login page.
-2. Create an account (Member or Vice Secretary).
+2. Create an account (Member, Vice Secretary, or Treasurer).
 3. Sign in immediately after registration. Email verification is not required.
 
 ---
@@ -142,7 +145,22 @@ NET_Platform-main/
 |------|--------|
 | **Admin** | Full control: members, branches, announcements, attendance, minutes, audit logs |
 | **Vice Secretary** | Attendance upload/manual, meeting recording, minutes |
+| **Treasurer** | Record KES income and expenses, receipts, budgets, obligations, assets, semester reports, annual reports |
 | **Member** | Dashboard, own attendance, profile, team chat |
+
+### Treasurer finance workflow
+
+- All transaction amounts are stored and displayed in Kenyan shillings (KES).
+- The academic reporting calendar is Semester 1: September-December and Semester 2: January-April of the following year. May-August is outside the active semester calendar.
+- Transactions support income types (offerings, donations, contributions, fundraising, and other), expense categories, dates, references, payment methods, notes, and protected receipt uploads.
+- The treasurer submits transactions; an administrator must approve expenses before they appear in official reports.
+- Semester budgets provide category limits and planned-versus-approved-actual comparisons, including overspending indicators.
+- Outstanding obligations and purchased assets can be recorded for annual reporting.
+- Semester reports calculate opening balance, approved income, approved expenses, closing balance, explanations, and report status. Treasurers submit reports to leadership and administrators approve or return them.
+- Annual reports combine approved transactions across both semesters and include balances, budgets, obligations, and assets.
+- Leadership can export semester and annual reports as PDF or Excel. Members do not receive detailed finance access.
+
+Finance routes are available under `/treasurer`, while administrator approvals are under `/treasurer/admin/finance`. The SQLite database is created or migrated automatically at application startup.
 
 ### Meeting minutes without paid APIs
 

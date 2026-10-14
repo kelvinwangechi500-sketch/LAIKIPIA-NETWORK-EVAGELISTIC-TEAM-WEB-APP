@@ -89,11 +89,22 @@ def index():
                 "online": member.last_seen and (datetime.utcnow() - member.last_seen).seconds < 300,
             })
 
+    dashboard_endpoints = {
+        "admin": "admin.dashboard",
+        "vice_secretary": "vs.dashboard",
+        "treasurer": "treasurer.dashboard",
+        "member": "member.dashboard",
+    }
+    dashboard_url = url_for(
+        dashboard_endpoints.get(current_user.role, "member.dashboard")
+    )
+
     return render_template("chat/index.html",
         group_rooms=rooms_data,
         dm_data=dm_data,
         all_members=all_members,
-        current_user=current_user)
+        current_user=current_user,
+        dashboard_url=dashboard_url)
 
 
 # ── Get messages for a room ───────────────────────────────────────────────────

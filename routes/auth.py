@@ -112,7 +112,7 @@ def register():
         if User.query.filter_by(email=email).first():
             errors.append("Email is already registered.")
 
-        allowed_roles = {"member", "vice_secretary"}
+        allowed_roles = {"member", "vice_secretary", "treasurer"}
         if is_admin:
             allowed_roles.add("admin")
         if role not in allowed_roles:
@@ -239,4 +239,6 @@ def _role_redirect(role):
         return redirect(url_for("admin.dashboard"))
     elif role == "vice_secretary":
         return redirect(url_for("vs.dashboard"))
+    elif role == "treasurer":
+        return redirect(url_for("treasurer.dashboard"))
     return redirect(url_for("member.dashboard"))
